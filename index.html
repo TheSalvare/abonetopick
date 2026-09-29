@@ -488,12 +488,13 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 .passlist{display:flex;flex-wrap:wrap;gap:8px}
 .passchip{border:2px solid #212121;background:transparent;color:#212121;border-radius:var(--rs);padding:6px 12px;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
 .passchip:hover{background:#212121;color:#F6F8EB}
-/* mobile header: centred */
+/* mobile header: small logo left, buttons right */
 @media (max-width:620px){
-  header.top{flex-direction:column;justify-content:center;gap:18px}
-  .wordmark{justify-content:center;width:100%}
-  .logo{margin:0 auto}
-  .tools{justify-content:center;width:100%}
+  header.top{flex-direction:row;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:10px}
+  .wordmark{flex:1 1 auto;min-width:0}
+  .logo{height:34px;max-width:100%;margin:0}
+  .tools{flex:none;gap:6px}
+  .iconbtn.hb{height:38px;padding:0 12px;font-size:15px;min-width:0}
 }
 .phead-stack{flex-direction:column;align-items:flex-start;gap:6px}
 /* shop extras */
@@ -879,7 +880,7 @@ function rollLoadout(paid){
   const keep=r.lockedPerk&&r.perks.includes(r.lockedPerk)?r.lockedPerk:null, keepAt=keep?r.perks.indexOf(keep):-1;
   const fresh=sample(poolPerks(r).filter(p=>p!==keep),4);prefetch(fresh);const final=[0,1,2,3].map(i=>i===keepAt?keep:null);
   let fi=0;for(let i=0;i<4;i++)if(final[i]===null)final[i]=fresh[fi++];
-  const done=()=>{const wasScr=r.scrambled;r.perks=final;if(keep&&!wasScr)r.lockedPerk=null;r.needsRoll=false;r.tierUp=false;if(wasScr){r.scrambled=false;r.curse=null;}ui.rolling=false;ui.landed=true;save();render();ui.landed=false;toast(wasScr?"scrambled. hope you like it.":"the entity has chosen.");};
+  const done=()=>{const wasScr=r.scrambled;r.perks=final;if(keep&&!wasScr)r.lockedPerk=null;r.needsRoll=false;r.tierUp=false;if(wasScr){r.scrambled=false;r.curse=null;}ui.rolling=false;ui.landed=true;save();render();ui.landed=false;toast(wasScr?"scrambled. hope you like it.":"the entity has chosen.");setTimeout(()=>goTo("match"),450);};
   if(reduced){done();return;}
   ui.rolling=true; render();
   const names=[...document.querySelectorAll(".perk .name")], perks=[...document.querySelectorAll(".perk")];
@@ -897,8 +898,8 @@ function enterFog(){const r=run(),a=allowance(r);
   const go=()=>{r.inMatch=true;r.char=fc;r.nextChar=null;r.stats.char=r.stats.char||{};r.stats.char[r.char]=(r.stats.char[r.char]||0)+1;ui.charRoll=false;
   const pool=DATA[r.role].bounties.filter(b=>b.need==null||(a.items!=null&&a.items>=b.need));
   r.bounties=sample(pool,PER_MATCH).map(b=>b.id);save();render();};
-  if(reduced||bought){go();return;}
-  ui.charRoll=true;render();
+  if(reduced||bought){go();goTo("match");return;}
+  ui.charRoll=true;render();goTo("match");
   const els=[...document.querySelectorAll("[data-spin]")];const chars=poolChars(r);let last="";
   const delays=[60,60,60,65,70,75,85,95,110,130,155,185,220,265,320];let i=0;
   const tick=()=>{
@@ -927,6 +928,7 @@ function logMatch(res){
   r.log.unshift({n:r.stats.matches,t:Date.now(),res,grade:r.grade,pips:r.pips,up:r.grade>(JSON.parse(r.snaps[r.snaps.length-1]).grade),bones:gained,hit,served,curse:r.curse?r.curse.n:null,smuggled:!!r.contraband});
   r.contraband=false; r.inMatch=false; r.bounties=[]; ui.quip=null;
   save(); render(); toast(notes.join(". ")||"match logged.");
+  goTo(r.completedAt?"top":r.needsRoll?"loadout":"match");
 }
 function pushSnap(r){const snaps=r.snaps||[];const c={...r};delete c.snaps;delete c.log;snaps.push(JSON.stringify(c));while(snaps.length>15)snaps.shift();r.snaps=snaps;}
 function undoLast(){const r=run();if(!r||!r.snaps||!r.snaps.length)return;const n=r.stats.matches;const snaps=r.snaps;const prev=JSON.parse(snaps.pop());prev.snaps=snaps;prev.log=r.log.slice(1);S.runs[S.role]=prev;ui.pick=null;save();render();toast(`game ${n} undone.`);}
@@ -950,6 +952,10 @@ function shop(id){
     openPicker("ban a killer for this run",opts,c=>{spend(3);r.banned=r.banned||[];r.banned.push(c);if(r.nextChar===c)r.nextChar=null;save();render();toast(`${c.toLowerCase()} is banned for the rest of this run.`);});}
   if(id==="killer"&&!r.nextChar) openPicker("choose your next killer",[...poolChars(r)].sort((a,b)=>a.localeCompare(b)),c=>{spend(4);r.nextChar=c;save();render();toast(`${c.toLowerCase()} it is. next match only.`);});
 }
+function goTo(which,block){const el=which==="top"?null:[...document.querySelectorAll("#app .panel")].find(p=>which==="loadout"?p.querySelector(".loadout"):which==="match"?/the match/.test((p.querySelector("h2")||{}).textContent||""):false);
+  const b=reduced?"auto":"smooth";
+  if(!el){window.scrollTo({top:0,behavior:b});return;}
+  const y=el.getBoundingClientRect().top+window.scrollY-16;window.scrollTo({top:Math.max(0,y),behavior:b});}
 function toLoadout(){const el=[...document.querySelectorAll(".panel")].find(p=>p.querySelector(".loadout"));if(el)el.scrollIntoView({behavior:reduced?"auto":"smooth",block:"center"});}
 function landSlot(i){ui.landedSlot=i;render();ui.landedSlot=null;}
 function spinSlot(i,finalPerk,done){
@@ -1050,7 +1056,7 @@ function openSettings(){
     (b)=>{const a=b.dataset.a;if(a==="copy")copyCode();if(a==="dl")downloadBackup();if(a==="import")importCode(document.getElementById("codebox").value);
       if(a==="unpass"){const x=passed(S.role)[b.dataset.k];const i=x.indexOf(b.dataset.n);if(i>-1)x.splice(i,1);save();toast(`${b.dataset.n.toLowerCase()} is back in your roster.`);openSettings();}
       if(a==="b-"||a==="b+"){const r=run();r.bones=Math.max(0,r.bones+(a==="b+"?1:-1));save();document.getElementById("badj").textContent=r.bones;render();}
-      if(a==="reset"){document.getElementById("abandon").innerHTML=`<p class="sm" style="margin-bottom:10px">abandon your ${S.role} run? this can't be undone unless you've saved a backup.</p><div class="btnrow"><button class="btn r" data-a="reset-yes">yes, abandon it</button><button class="btn ghost" data-a="reset-no">keep my run</button></div>`;}
+      if(a==="reset"){document.getElementById("abandon").innerHTML=`<p class="sm" style="margin-bottom:10px">abandon your ${S.role} run? this can't be undone unless you've saved a backup.</p><div class="btnrow"><button class="btn r" data-a="reset-yes">yes, abandon it</button><button class="btn ghost" data-a="reset-no">keep my run</button></div>`;document.getElementById("abandon").scrollIntoView({behavior:reduced?"auto":"smooth",block:"end"});}
       if(a==="reset-no"){document.getElementById("abandon").innerHTML=`<button class="btn r" data-a="reset">abandon this run</button>`;}
       if(a==="reset-yes"){S.runs[S.role]=null;ui.pick=null;save();closeDlg();render();toast(`${S.role} run abandoned.`);}});
 }
@@ -1291,6 +1297,7 @@ document.addEventListener("click",e=>{
   if(a==="mode"){setMode(isNight()?"day":"night");return;}
   if(a==="roleflip"){slideSwitch();S.role=S.role==="survivor"?"killer":"survivor";ui.pick=null;ui.quip=null;save();render();const el=document.getElementById("app");el.classList.remove("fade");void el.offsetWidth;el.classList.add("fade");}
   if(a==="role"){if(S.role===b.dataset.role)return;S.role=b.dataset.role;ui.pick=null;ui.quip=null;save();render();const el=document.getElementById("app");el.classList.remove("fade");void el.offsetWidth;el.classList.add("fade");}
+  if(a==="start"){setTimeout(()=>goTo("top"),0);}
   if(a==="start") startRun(S.role,+document.getElementById("sg").value,+(document.getElementById("sp")||{value:0}).value,(document.querySelector('input[name="pool"]:checked')||{value:"base"}).value);
   if(a==="roll") rollLoadout();
   if(a==="fog") enterFog();
