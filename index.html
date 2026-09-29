@@ -1236,7 +1236,7 @@ function render(){
   if(r.completedAt){
     match=`<div class="banner"><h2>iridescent i</h2><p style="margin-top:6px">${r.stats.matches} matches, ${r.stats.curses} curses, ${r.stats.earned} bones. the entity is mildly impressed. your card is ready below.</p></div>`;
   } else if(r.needsRoll){
-    match=`<div class="panel"><div class="phead"><h2>the match</h2>${stepper}</div>${curse}<p class="dim">roll your loadout first. then you can draw your bounties and queue up.</p></div>`;
+    match=`<div class="panel"><div class="phead"><h2>the match</h2>${stepper}</div>${curse}<p class="dim">roll your loadout below first. then you can draw your bounties and queue up.</p></div>`;
   } else if(ui.charRoll){
     match=`<div class="panel hot"><div class="phead"><h2>the match</h2>${stepper}</div>${curse}<p class="dim" style="text-align:center">the entity is choosing your ${r.role}\u2026</p><div class="bigspin" data-spin>?</div></div>`;
   } else if(!r.inMatch){
@@ -1266,7 +1266,7 @@ function render(){
 
   const runPanel=`<div class="panel"><div class="phead"><h2>this run</h2><div class="tabs" role="tablist" data-active="${ui.tab}">${["stats","history","card"].map(t=>`<button role="tab" aria-selected="${ui.tab===t}" data-action="tab" data-tab="${t}">${t}</button>`).join("")}</div></div><div id="tabbody">${tabBodyHTML(r)}</div></div>`;
 
-  app.innerHTML=hero+loadout+match+shop+runPanel;
+  app.innerHTML=hero+match+loadout+shop+runPanel;
   renderSticky(r);
   if(ui.tab==="card") showCard();
 }
