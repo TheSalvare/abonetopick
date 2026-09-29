@@ -501,7 +501,7 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 .perk.locked .dia::before{border-color:var(--yellow)}
 .ddtag{display:inline-block;margin:0 0 10px;padding:4px 10px;border-radius:8px;background:var(--yellow);color:#212121;font-weight:700;font-size:15px}
 /* film grain */
-body::after{content:"";position:fixed;inset:-50%;z-index:9999;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='3.2' intercept='-1.1'/%3E%3CfeFuncG type='linear' slope='3.2' intercept='-1.1'/%3E%3CfeFuncB type='linear' slope='3.2' intercept='-1.1'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:220px 220px;opacity:.07;mix-blend-mode:normal;animation:grain 1.2s steps(6) infinite}
+body::after{content:"";position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='3.2' intercept='-1.1'/%3E%3CfeFuncG type='linear' slope='3.2' intercept='-1.1'/%3E%3CfeFuncB type='linear' slope='3.2' intercept='-1.1'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:220px 220px;opacity:.07;mix-blend-mode:normal}
 :root[data-mode="night"] body::after{opacity:.08}
 @keyframes grain{0%{transform:translate(0,0)}17%{transform:translate(-4%,3%)}33%{transform:translate(3%,-5%)}50%{transform:translate(-6%,-2%)}67%{transform:translate(5%,4%)}83%{transform:translate(-2%,6%)}100%{transform:translate(0,0)}}
 @media (prefers-reduced-motion:reduce){body::after{animation:none}}
@@ -686,8 +686,23 @@ function imgNames(name){
     if(/^The /.test(n))add(n.replace(/^The /,"").replace(/:/g,""));
   });
   if(name==="Bill Overbeck"){add("William Overbeck");add("William Bill Overbeck");add("Bill");}
-  const out=[];IMG_DIRS.forEach(d=>v.forEach(n=>IMG_EXT.forEach(e=>out.push(d+encodeURIComponent(n).replace(/'/g,"%27")+"."+e))));return out;
+  const isBase=typeof DATA!=="undefined"&&["survivor","killer"].some(r=>DATA[r].chars.includes(name)||DATA[r].perks.includes(name));
+  const dirs=isBase?["images/base/","images/all/","images/"]:["images/all/","images/base/","images/"];
+  const out=[];dirs.forEach(d=>v.forEach(n=>IMG_EXT.forEach(e=>out.push(d+encodeURIComponent(n).replace(/'/g,"%27")+"."+e))));return out;
 }
+/* find an image ahead of time: checks likely filenames in parallel batches, best match first */
+const IMG_PENDING={};
+function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=src;});}
+function resolveImg(name){
+  if(!name||IMG_CACHE[name]!==undefined) return Promise.resolve(IMG_CACHE[name]||null);
+  if(IMG_PENDING[name]) return IMG_PENDING[name];
+  const list=imgNames(name);
+  return IMG_PENDING[name]=(async()=>{
+    for(let i=0;i<list.length;i+=8){const batch=list.slice(i,i+8),ok=await Promise.all(batch.map(probe));const k=ok.indexOf(true);
+      if(k>-1){IMG_CACHE[name]=batch[k];delete IMG_PENDING[name];return batch[k];}}
+    IMG_CACHE[name]=false;delete IMG_PENDING[name];return null;})();
+}
+const prefetch=(...names)=>names.flat().forEach(n=>{if(n)resolveImg(n);});
 function imgTag(name){
   const c=IMG_CACHE[name];
   if(c===false) return "";
@@ -867,7 +882,7 @@ function rollLoadout(paid){
   const r=run(); if(ui.rolling) return;
   if(paid){spend(3);}
   const keep=r.lockedPerk&&r.perks.includes(r.lockedPerk)?r.lockedPerk:null, keepAt=keep?r.perks.indexOf(keep):-1;
-  const fresh=sample(poolPerks(r).filter(p=>p!==keep),4);const final=[0,1,2,3].map(i=>i===keepAt?keep:null);
+  const fresh=sample(poolPerks(r).filter(p=>p!==keep),4);prefetch(fresh);const final=[0,1,2,3].map(i=>i===keepAt?keep:null);
   let fi=0;for(let i=0;i<4;i++)if(final[i]===null)final[i]=fresh[fi++];
   const done=()=>{const wasScr=r.scrambled;r.perks=final;if(keep&&!wasScr)r.lockedPerk=null;r.needsRoll=false;r.tierUp=false;if(wasScr){r.scrambled=false;r.curse=null;}ui.rolling=false;ui.landed=true;save();render();ui.landed=false;toast(wasScr?"scrambled. hope you like it.":"the entity has chosen.");};
   if(reduced){done();return;}
@@ -883,7 +898,7 @@ function rollLoadout(paid){
 
 /* ---------- match ---------- */
 function enterFog(){const r=run(),a=allowance(r);
-  const bought=!!r.nextChar, fc=r.nextChar||rnd(poolChars(r).filter(c=>c!==r.char));
+  const bought=!!r.nextChar, fc=r.nextChar||rnd(poolChars(r).filter(c=>c!==r.char));prefetch(fc);
   const go=()=>{r.inMatch=true;r.char=fc;r.nextChar=null;r.stats.char=r.stats.char||{};r.stats.char[r.char]=(r.stats.char[r.char]||0)+1;ui.charRoll=false;
   const pool=DATA[r.role].bounties.filter(b=>b.need==null||(a.items!=null&&a.items>=b.need));
   r.bounties=sample(pool,PER_MATCH).map(b=>b.id);save();render();};
@@ -967,7 +982,7 @@ function passChar(){
 function rerollChar(isPass){
   const r=run(),c=r.char;
   if(r.stats.char&&r.stats.char[c]){r.stats.char[c]--;if(!r.stats.char[c])delete r.stats.char[c];}
-  const opts=poolChars(r).filter(q=>q!==c),nc=rnd(opts.length?opts:poolChars(r));
+  const opts=poolChars(r).filter(q=>q!==c),nc=rnd(opts.length?opts:poolChars(r));prefetch(nc);
   const msg=isPass?`passed on ${c.toLowerCase()}. you're playing ${nc.toLowerCase()}.`:`rerolled. you're playing ${nc.toLowerCase()}.`;
   if(reduced){r.char=nc;r.stats.char=r.stats.char||{};r.stats.char[nc]=(r.stats.char[nc]||0)+1;save();render();toast(msg);return;}
   ui.charRoll=true;render();
@@ -981,7 +996,7 @@ function slotClick(i){
   const r=run(); if(!ui.pick) return;
   if(ui.pick==="lock"){spend(3);r.lockedPerk=r.perks[i];ui.pick=null;save();landSlot(i);toast(`${r.perks[i].toLowerCase()} is locked in.`);return;}
   if(r.lockedPerk===r.perks[i]&&(ui.pick==="reroll"||ui.pick==="choose"))r.lockedPerk=null;
-  if(ui.pick==="reroll"){spend(1);const old=r.perks[i],np=rnd(poolPerks(r).filter(p=>!r.perks.includes(p)));ui.pick=null;
+  if(ui.pick==="reroll"){spend(1);const old=r.perks[i],np=rnd(poolPerks(r).filter(p=>!r.perks.includes(p)));prefetch(np);ui.pick=null;
     spinSlot(i,np,()=>{r.perks[i]=np;save();toast(`${old.toLowerCase()} became ${np.toLowerCase()}.`);});}
   else{ui.pick=null;render();openPicker("choose a perk",poolPerks(r).filter(p=>!r.perks.includes(p)).sort((a,b)=>a.localeCompare(b)),p=>{spend(3);r.perks[i]=p;save();landSlot(i);toast(`${p.toLowerCase()} equipped.`);});}
 }
@@ -1308,6 +1323,9 @@ document.addEventListener("change",e=>{
   if(e.target.id==="fixgrade"){const r=run();r.grade=+e.target.value;r.pips=0;r.completedAt=r.grade===FINAL?(r.completedAt||Date.now()):null;save();render();toast(`grade set to ${gradeName(r.grade)}.`);}
 });
 rollover(); save(); render();
+(function warm(){const r=run();if(r){prefetch(r.perks,r.char,r.nextChar);}
+  const later=()=>["survivor","killer"].forEach(role=>{const rr=S.runs[role];const src=rr&&rr.pool==="all"?ALL[role]:DATA[role];prefetch(src.chars);});
+  setTimeout(()=>{window.requestIdleCallback?requestIdleCallback(later):later();},1500);})();
 </script>
 </body>
 </html>
