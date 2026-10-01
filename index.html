@@ -722,6 +722,20 @@ function resolveImg(name){
       if(k>-1){IMG_CACHE[name]=batch[k];delete IMG_PENDING[name];return batch[k];}}
     IMG_CACHE[name]=false;delete IMG_PENDING[name];return null;})();
 }
+/* card art: images/ascii/survivor/ or images/ascii/killer/ (or plain images/ascii/), same filenames as the portraits.
+   falls back to the regular portrait when there's no dedicated ascii image. */
+const ASCII_CACHE={};
+function asciiNames(name,role){
+  const files=[...new Set(imgNames(name).map(u=>u.replace(/^images\/(base|all)\/|^images\//,"")))];
+  const out=[];[`images/ascii/${role}/`,"images/ascii/"].forEach(d=>files.forEach(f=>out.push(d+f)));return out;
+}
+async function resolveAscii(name,role){
+  const key=role+"|"+name;if(ASCII_CACHE[key]!==undefined)return ASCII_CACHE[key]||null;
+  const list=asciiNames(name,role);
+  for(let i=0;i<list.length;i+=8){const batch=list.slice(i,i+8),ok=await Promise.all(batch.map(probe));const k=ok.indexOf(true);
+    if(k>-1){ASCII_CACHE[key]=batch[k];return batch[k];}}
+  ASCII_CACHE[key]=false;return null;
+}
 const prefetch=(...names)=>names.flat().forEach(n=>{if(n)resolveImg(n);});
 function imgTag(name){
   const c=IMG_CACHE[name];
@@ -1125,7 +1139,7 @@ async function drawCard(r,noLogo){
   const cr="#F6F8EB",dim="#a39b95",Y="#FABB07",R="#D24026",G="#3FA874",tc=["#3B3D38","#80523B","#B7B7B8","#FABB07","#D24026"];
   const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#262626");g.addColorStop(1,"#191919");x.fillStyle=g;x.fillRect(0,0,W,H);
   x.fillStyle=Y;x.fillRect(0,0,W,14);
-  {const mp0=topOf(r.stats.char);if(mp0){const src=await resolveImg(mp0.k);if(src)await drawAsciiCorner(x,src,W,H);}}
+  {const mp0=topOf(r.stats.char);if(mp0){const src=(await resolveAscii(mp0.k,r.role))||(await resolveImg(mp0.k));if(src)await drawAsciiCorner(x,src,W,H);}}
   let logoDrawn=false;
   if(CARD_LOGO&&!noLogo){try{const h=120,w=Math.min(900,h*(CARD_LOGO.naturalWidth/CARD_LOGO.naturalHeight||4));x.drawImage(CARD_LOGO,90,82,w,h);x.getImageData(0,0,1,1);logoDrawn=true;}catch(e){return drawCard(r,true);}}
   if(!logoDrawn){x.fillStyle=cr;x.font='700 100px "UnifrakturCook"';x.fillText("a bone to pick",90,180);}
