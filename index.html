@@ -27,14 +27,14 @@
     --bg:#1b1a19; --panel:#232120; --panel-2:#2d2a28; --line:#363330;
     --ink:#F6F8EB; --ink-dim:#a39b95;
     --yellow:#FABB07; --red:#D24026; --green:#3FA874;
-    --t-ash:#3B3D38; --t-bronze:#80523B; --t-silver:#B7B7B8; --t-gold:#FABB07; --t-iri:#D24026;
+    --t-ash:#555B57; --t-bronze:#80523B; --t-silver:#B7B7B8; --t-gold:#FABB07; --t-iri:#D24026;
   }
 }
 :root[data-theme="dark"]{
   --bg:#1b1a19; --panel:#232120; --panel-2:#2d2a28; --line:#363330;
   --ink:#F6F8EB; --ink-dim:#a39b95;
   --yellow:#FABB07; --red:#D24026; --green:#3FA874;
-  --t-ash:#3B3D38; --t-bronze:#80523B; --t-silver:#B7B7B8; --t-gold:#FABB07; --t-iri:#D24026;
+  --t-ash:#555B57; --t-bronze:#80523B; --t-silver:#B7B7B8; --t-gold:#FABB07; --t-iri:#D24026;
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -351,7 +351,7 @@ footer a{color:var(--ink)}
   --bg:#191919; --panel:#212121; --panel-2:#2c2c2c; --line:#383838;
   --ink:#F6F8EB; --ink-dim:#a3a59a;
   --orange:#D24026; --yellow:#FABB07; --yellow-bg:#FABB07; --red:#D24026; --green:#3FA874; --green-bg:#007742; --on-accent:#212121;
-  --t-ash:#3B3D38; --t-bronze:#80523B; --t-silver:#B7B7B8; --t-gold:#FABB07; --t-iri:#D24026;
+  --t-ash:#555B57; --t-bronze:#80523B; --t-silver:#B7B7B8; --t-gold:#FABB07; --t-iri:#D24026;
   --rl:20px; --r:12px; --rs:10px;
 }
 body{background:var(--page);color:var(--page-ink)}
@@ -524,6 +524,7 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 .perk .name{height:3.45em;min-height:0;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;text-align:center;word-break:break-word}
 .bigspin{min-height:2.1em;display:flex;align-items:center;justify-content:center;line-height:1.05}
 @media (max-width:620px){.perk .name{height:3.6em}}
+button,label,.passx,[data-action]{touch-action:manipulation}
 /* copy button */
 .cpbtn{position:relative;width:42px;height:42px;flex:none;display:grid;place-items:center;background:#191919;border:2px solid #383838;border-radius:var(--rs);color:#F6F8EB;cursor:pointer;padding:0;transition:border-color .2s,transform .2s cubic-bezier(.34,1.56,.64,1)}
 .cpbtn:hover{border-color:#F6F8EB;transform:translateY(-2px)}
@@ -677,7 +678,7 @@ footer.band a{color:#F6F8EB;text-decoration-thickness:1.5px;text-underline-offse
 </div>
 <footer class="band">
   <div class="band-in">
-    <div>designed by thesalvare.<br>not affiliated with behaviour interactive or dead by daylight.</div>
+    <div>designed by thesalvare<br>not affiliated with behaviour interactive or dead by daylight</div>
     <div class="band-r">created for fun by georose<br>say hello on <a href="https://www.twitch.tv/georose" target="_blank" rel="noopener">Twitch</a></div>
     <button class="modesw" id="modesw" data-action="mode" data-active="day" aria-label="switch to dark mode">
       <span class="ms-knob" aria-hidden="true"></span>
@@ -849,7 +850,7 @@ const DATA={
    {n:"scrambled",d:"the entity rerolls your whole loadout. lift the curse to keep your build.",instant:true}]
  }
 };
-const RAR=[{n:"common",c:"#80523B"},{n:"uncommon",c:"#FABB07"},{n:"rare",c:"#007742"},{n:"very rare",c:"#3D3F74"},{n:"ultra rare",c:"#D24026"}];
+const RAR=[{n:"common",c:"#80523B"},{n:"uncommon",c:"#FABB07"},{n:"rare",c:"#007742"},{n:"very rare",c:"#494A86"},{n:"ultra rare",c:"#D24026"}];
 const RARW=["brown","yellow","green","purple","pink"];
 /* max rarity index per tier (ash..iri); -1 means not allowed */
 const KIT={survivor:{items:[0,1,2,2,3],addons:[-1,0,1,2,3]},killer:{addons:[-1,0,1,2,3]}};
@@ -1046,7 +1047,7 @@ function slotClick(i){
 function dialog(title,body,onClick){
   const d=document.getElementById("dlg");
   d.innerHTML=`<div class="dhead"><h3>${title}</h3><button class="iconbtn" data-close>close</button></div><div class="dbody">${body}</div>`;
-  d.onclick=e=>{if(e.target===d){closeDlg();return;}const b=e.target.closest("button");if(!b)return;if(b.hasAttribute("data-close")){closeDlg();return;}onClick&&onClick(b,d);};
+  d.onclick=e=>{if(e.target===d){const q=d.getBoundingClientRect();if(e.clientX<q.left||e.clientX>q.right||e.clientY<q.top||e.clientY>q.bottom)closeDlg();return;}const b=e.target.closest("button");if(!b)return;if(b.hasAttribute("data-close")){closeDlg();return;}onClick&&onClick(b,d);};
   if(!d.open) d.showModal();
 }
 function closeDlg(){const d=document.getElementById("dlg");if(!d.open||d.classList.contains("closing"))return;
@@ -1116,13 +1117,16 @@ function topOf(o){let k=null,v=0;for(const[a,b]of Object.entries(o||{}))if(b>v){
 function loadImg(src){return new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=src;});}
 const ASCII_LAYER={};
 async function drawAsciiCorner(x,src,W,H,opt={}){
-  const fs=opt.fs||13, cw=fs*0.6, ch=fs, aw=opt.aw||660, ah=opt.ah||820, ax=W-aw, ay=H-ah;
+  const fs=opt.fs||13, cw=fs*0.6, ch=fs, aw=opt.aw||720, ah=opt.ah||820, ax=W-aw, ay=H-ah;
   if(!ASCII_LAYER[src]){
     const img=await loadImg(src);if(!img)return false;
     const cols=Math.floor(aw/cw), rows=Math.floor(ah/ch);
     const off=document.createElement("canvas");off.width=cols;off.height=rows;const o=off.getContext("2d");
-    const scale=(rows*1.15)/img.height, fw=img.width*scale*(ch/cw), fh=img.height*scale;
-    o.drawImage(img,cols-fw*0.78,rows-fh*0.9,fw,fh);
+    // fit the figure so the whole face stays on the card: height ~ the art area, never wider than it,
+    // right edge only just touching the card edge, bottom of the body cropped off
+    let fh=rows*0.98, fw=img.width*(fh/img.height)*(ch/cw);
+    if(fw>cols*0.98){const k=(cols*0.98)/fw;fw*=k;fh*=k;}
+    o.drawImage(img,cols-fw*0.875,rows-fh*0.9,fw,fh);
     let d;try{d=o.getImageData(0,0,cols,rows).data;}catch(e){return false;} // blocked when the page is opened as a local file
     // build the art once: one text line per row per brightness band (monospace keeps the columns aligned)
     const ramp=" .,:;i1tfLCG08@", BANDS=8, lines=[];
@@ -1143,7 +1147,7 @@ async function drawAsciiCorner(x,src,W,H,opt={}){
 async function drawCard(r,noLogo){
   await document.fonts.ready;
   const W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
-  const cr="#F6F8EB",dim="#a39b95",Y="#FABB07",R="#D24026",G="#3FA874",tc=["#3B3D38","#80523B","#B7B7B8","#FABB07","#D24026"];
+  const cr="#F6F8EB",dim="#a39b95",Y="#FABB07",R="#D24026",G="#3FA874",tc=["#555B57","#80523B","#B7B7B8","#FABB07","#D24026"];
   const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#262626");g.addColorStop(1,"#191919");x.fillStyle=g;x.fillRect(0,0,W,H);
   x.fillStyle=Y;x.fillRect(0,0,W,14);
   {const mp0=topOf(r.stats.char);if(mp0){const src=(await resolveAscii(mp0.k,r.role))||(await resolveImg(mp0.k));if(src)await drawAsciiCorner(x,src,W,H);}}
@@ -1327,7 +1331,7 @@ function render(){
 }
 
 /* ---------- overlay ---------- */
-const TC=["#3B3D38","#80523B","#B7B7B8","#FABB07","#D24026"];
+const TC=["#555B57","#80523B","#B7B7B8","#FABB07","#D24026"];
 function overlayHTML(r,opt){
   const o=opt.show;
   if(!r) return `<div class="ov"><div class="line">no ${S.role} run yet.</div></div>`;
