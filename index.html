@@ -718,7 +718,8 @@ function resolveImg(name){
   if(IMG_PENDING[name]) return IMG_PENDING[name];
   const list=imgNames(name);
   return IMG_PENDING[name]=(async()=>{
-    for(let i=0;i<list.length;i+=8){const batch=list.slice(i,i+8),ok=await Promise.all(batch.map(probe));const k=ok.indexOf(true);
+    if(await probe(list[0])){IMG_CACHE[name]=list[0];delete IMG_PENDING[name];return list[0];}
+    for(let i=1;i<list.length;i+=8){const batch=list.slice(i,i+8),ok=await Promise.all(batch.map(probe));const k=ok.indexOf(true);
       if(k>-1){IMG_CACHE[name]=batch[k];delete IMG_PENDING[name];return batch[k];}}
     IMG_CACHE[name]=false;delete IMG_PENDING[name];return null;})();
 }
@@ -741,12 +742,10 @@ function imgTag(name){
   const c=IMG_CACHE[name];
   if(c===false) return "";
   if(c) return `<img src="${c}" alt="">`;
-  const list=imgNames(name);
-  return `<img src="${list[0]}" alt="" data-img="${esc(name)}" data-i="0" onload="imgOk(this)" onerror="imgNext(this)">`;
+  resolveImg(name).then(src=>{if(!src)return;document.querySelectorAll(`[data-imgwait="${CSS.escape(name)}"]`).forEach(el=>{
+    const p=el.parentElement;el.outerHTML=`<img src="${src}" alt="">`;if(p)p.classList.add("has-img");});});
+  return `<span class="imgwait" data-imgwait="${esc(name)}" hidden></span>`;
 }
-function imgOk(el){IMG_CACHE[el.dataset.img]=el.getAttribute("src");el.parentElement.classList.add("has-img");}
-function imgNext(el){const name=el.dataset.img,list=imgNames(name),i=+el.dataset.i+1;
-  if(i<list.length){el.dataset.i=i;el.src=list[i];}else{IMG_CACHE[name]=false;el.remove();}}
 
 /* ---------- light / dark mode ---------- */
 function isNight(){return document.documentElement.dataset.mode==="night";}
@@ -864,7 +863,6 @@ const poolPerks=r=>{const l=roster(r).perks;if(!r||r.pool!=="all")return l;const
 const poolChars=r=>{let l=roster(r).chars;if(r&&r.banned&&r.banned.length)l=l.filter(c=>!r.banned.includes(c));if(!r||r.pool!=="all")return l;const x=passed(r.role).chars;return l.filter(c=>!x.includes(c));};
 const MIN_PERKS=8, MIN_CHARS=2;
 const POOLS={base:"base game",all:"access all"};
-const QUIPS=["the entity is feeling peckish.","try not to trip over a pallet.","the fog smells faintly of burnt toast tonight.","somebody always forgets to do gens.","the entity has placed a small wager on you.","remember: lockers are not a personality.","the crows are watching. they're judging.","it's only a game. the entity disagrees."];
 const PER_MATCH=2, LIFT=2;
 const SHOP=[
  {id:"reroll",cost:1,what:"reroll a perk",how:"pick a slot, get a new random perk."},
@@ -919,7 +917,7 @@ function rollLoadout(paid){
   const keep=r.lockedPerk&&r.perks.includes(r.lockedPerk)?r.lockedPerk:null, keepAt=keep?r.perks.indexOf(keep):-1;
   const fresh=sample(poolPerks(r).filter(p=>p!==keep),4);prefetch(fresh);const final=[0,1,2,3].map(i=>i===keepAt?keep:null);
   let fi=0;for(let i=0;i<4;i++)if(final[i]===null)final[i]=fresh[fi++];
-  const done=()=>{const wasScr=r.scrambled;r.perks=final;if(keep&&!wasScr)r.lockedPerk=null;r.needsRoll=false;r.tierUp=false;if(wasScr){r.scrambled=false;r.curse=null;}ui.rolling=false;ui.landed=true;save();render();ui.landed=false;toast(wasScr?"scrambled. hope you like it.":"the entity has chosen.");setTimeout(()=>goTo("match"),450);};
+  const done=()=>{const wasScr=r.scrambled;r.perks=final;if(keep&&!wasScr)r.lockedPerk=null;r.needsRoll=false;r.tierUp=false;if(wasScr){r.scrambled=false;r.curse=null;}ui.rolling=false;ui.landed=true;save();render();ui.landed=false;toast(wasScr?"scrambled. hope you like it.":"the entity has chosen.");setTimeout(()=>nudge("match"),450);};
   if(reduced){done();return;}
   ui.rolling=true; render();
   const names=[...document.querySelectorAll(".perk .name")], perks=[...document.querySelectorAll(".perk")];
@@ -937,8 +935,8 @@ function enterFog(){const r=run(),a=allowance(r);
   const go=()=>{r.inMatch=true;r.char=fc;r.nextChar=null;r.stats.char=r.stats.char||{};r.stats.char[r.char]=(r.stats.char[r.char]||0)+1;ui.charRoll=false;
   const pool=DATA[r.role].bounties.filter(b=>b.need==null||(a.items!=null&&a.items>=b.need));
   r.bounties=sample(pool,PER_MATCH).map(b=>b.id);save();render();};
-  if(reduced||bought){go();goTo("match");return;}
-  ui.charRoll=true;render();goTo("match");
+  if(reduced||bought){go();nudge("match");return;}
+  ui.charRoll=true;render();nudge("match");
   const els=[...document.querySelectorAll("[data-spin]")];const chars=poolChars(r);let last="";
   const delays=[60,60,60,65,70,75,85,95,110,130,155,185,220,265,320];let i=0;
   const tick=()=>{
@@ -965,9 +963,9 @@ function logMatch(res){
     else if(Math.floor(r.grade/4)>startTier){r.needsRoll=true;r.tierUp=true;r.bones++;r.stats.earned++;notes.push(`${TIERS[Math.floor(r.grade/4)].n} reached. +1 bone`);}
   }
   r.log.unshift({n:r.stats.matches,t:Date.now(),res,grade:r.grade,pips:r.pips,up:r.grade>(JSON.parse(r.snaps[r.snaps.length-1]).grade),bones:gained,hit,served,curse:r.curse?r.curse.n:null,smuggled:!!r.contraband});
-  r.contraband=false; r.inMatch=false; r.bounties=[]; ui.quip=null;
+  r.contraband=false; r.inMatch=false; r.bounties=[];
   save(); render(); toast(notes.join(". ")||"match logged.");
-  goTo(r.completedAt?"top":r.needsRoll?"loadout":"match");
+  if(r.completedAt)goTo("top");else if(r.needsRoll)nudge("loadout");else nudge("match");
 }
 function pushSnap(r){const snaps=r.snaps||[];const c={...r};delete c.snaps;delete c.log;snaps.push(JSON.stringify(c));while(snaps.length>15)snaps.shift();r.snaps=snaps;}
 function undoLast(){const r=run();if(!r||!r.snaps||!r.snaps.length)return;const n=r.stats.matches;const snaps=r.snaps;const prev=JSON.parse(snaps.pop());prev.snaps=snaps;prev.log=r.log.slice(1);S.runs[S.role]=prev;ui.pick=null;save();render();toast(`game ${n} undone.`);}
@@ -991,11 +989,14 @@ function shop(id){
     openPicker("ban a killer for this run",opts,c=>{spend(3);r.banned=r.banned||[];r.banned.push(c);if(r.nextChar===c)r.nextChar=null;save();render();toast(`${c.toLowerCase()} is banned for the rest of this run.`);});}
   if(id==="killer"&&!r.nextChar) openPicker("choose your next killer",[...poolChars(r)].sort((a,b)=>a.localeCompare(b)),c=>{spend(4);r.nextChar=c;save();render();toast(`${c.toLowerCase()} it is. next match only.`);});
 }
+function inView(el){if(!el)return false;const r=el.getBoundingClientRect(),h=window.innerHeight;return r.top>=0&&r.top<h*0.55;}
+function findPanel(which){return [...document.querySelectorAll("#app .panel")].find(p=>which==="loadout"?p.querySelector(".loadout"):which==="match"?/the match/.test((p.querySelector("h2")||{}).textContent||""):false);}
+function nudge(which){const el=findPanel(which);if(el&&!inView(el))goTo(which);}
 function goTo(which,block){const el=which==="top"?null:[...document.querySelectorAll("#app .panel")].find(p=>which==="loadout"?p.querySelector(".loadout"):which==="match"?/the match/.test((p.querySelector("h2")||{}).textContent||""):false);
   const b=reduced?"auto":"smooth";
   if(!el){window.scrollTo({top:0,behavior:b});return;}
   const y=el.getBoundingClientRect().top+window.scrollY-16;window.scrollTo({top:Math.max(0,y),behavior:b});}
-function toLoadout(){const el=[...document.querySelectorAll(".panel")].find(p=>p.querySelector(".loadout"));if(el)el.scrollIntoView({behavior:reduced?"auto":"smooth",block:"center"});}
+function toLoadout(){nudge("loadout");}
 function landSlot(i){ui.landedSlot=i;render();ui.landedSlot=null;}
 function spinSlot(i,finalPerk,done){
   const r=run();
@@ -1113,25 +1114,31 @@ function localSave(data,filename){try{const blob=data instanceof Blob?data:new B
 function topOf(o){let k=null,v=0;for(const[a,b]of Object.entries(o||{}))if(b>v){k=a;v=b;}return k?{k,v}:null;}
 /* ascii portrait for the share card: the run's most-played character, cropped into the bottom-right corner */
 function loadImg(src){return new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=src;});}
+const ASCII_LAYER={};
 async function drawAsciiCorner(x,src,W,H,opt={}){
-  const img=await loadImg(src);if(!img)return false;
   const fs=opt.fs||13, cw=fs*0.6, ch=fs, aw=opt.aw||660, ah=opt.ah||820, ax=W-aw, ay=H-ah;
-  const cols=Math.floor(aw/cw), rows=Math.floor(ah/ch);
-  const off=document.createElement("canvas");off.width=cols;off.height=rows;const o=off.getContext("2d");
-  const scale=(rows*1.15)/img.height, fw=img.width*scale*(ch/cw), fh=img.height*scale;
-  o.drawImage(img,cols-fw*0.78,rows-fh*0.9,fw,fh);
-  let d;try{d=o.getImageData(0,0,cols,rows).data;}catch(e){return false;} // blocked when the page is opened as a local file
-  const ramp=" .,:;i1tfLCG08@";
-  x.save();x.font=`700 ${fs}px "Courier New", monospace`;x.textBaseline="top";
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-    const k=(r*cols+c)*4,a=d[k+3]/255;if(a<.08)continue;
-    let lum=(0.299*d[k]+0.587*d[k+1]+0.114*d[k+2])/255;lum=Math.pow(Math.min(1,Math.max(0,(lum-.08)/.8)),.85);
-    const g=ramp[Math.min(ramp.length-1,Math.floor(lum*(ramp.length-1)+0.5))];if(g===" ")continue;
-    const fade=Math.min(1,(c/cols)*1.5)*Math.min(1,(r/rows)*1.4);
-    x.fillStyle=`rgba(246,248,235,${(0.14+0.62*lum)*a*fade})`;
-    x.fillText(g,ax+c*cw,ay+r*ch);
+  if(!ASCII_LAYER[src]){
+    const img=await loadImg(src);if(!img)return false;
+    const cols=Math.floor(aw/cw), rows=Math.floor(ah/ch);
+    const off=document.createElement("canvas");off.width=cols;off.height=rows;const o=off.getContext("2d");
+    const scale=(rows*1.15)/img.height, fw=img.width*scale*(ch/cw), fh=img.height*scale;
+    o.drawImage(img,cols-fw*0.78,rows-fh*0.9,fw,fh);
+    let d;try{d=o.getImageData(0,0,cols,rows).data;}catch(e){return false;} // blocked when the page is opened as a local file
+    // build the art once: one text line per row per brightness band (monospace keeps the columns aligned)
+    const ramp=" .,:;i1tfLCG08@", BANDS=8, lines=[];
+    for(let r=0;r<rows;r++){const rowB=Array.from({length:BANDS},()=>Array(cols).fill(" "));
+      for(let c=0;c<cols;c++){const k=(r*cols+c)*4,a=d[k+3]/255;if(a<.08)continue;
+        let lum=(0.299*d[k]+0.587*d[k+1]+0.114*d[k+2])/255;lum=Math.pow(Math.min(1,Math.max(0,(lum-.08)/.8)),.85);
+        const g=ramp[Math.min(ramp.length-1,Math.floor(lum*(ramp.length-1)+0.5))];if(g===" ")continue;
+        const fade=Math.min(1,(c/cols)*1.5)*Math.min(1,(r/rows)*1.4), al=(0.14+0.62*lum)*a*fade;
+        rowB[Math.min(BANDS-1,Math.floor(al*BANDS))][c]=g;}
+      rowB.forEach((arr,b)=>{const t=arr.join("");if(t.trim())lines.push([b,r,t]);});}
+    const layer=document.createElement("canvas");layer.width=aw;layer.height=ah;const L=layer.getContext("2d");
+    L.font=`700 ${fs}px "Courier New", monospace`;L.textBaseline="top";
+    lines.forEach(([b,r,t])=>{L.fillStyle=`rgba(246,248,235,${(b+0.5)/BANDS})`;L.fillText(t,0,r*ch);});
+    ASCII_LAYER[src]=layer;
   }
-  x.restore();return true;
+  x.drawImage(ASCII_LAYER[src],ax,ay);return true;
 }
 async function drawCard(r,noLogo){
   await document.fonts.ready;
@@ -1160,7 +1167,14 @@ async function drawCard(r,noLogo){
   x.textAlign="right";x.fillStyle=Y;x.font='700 30px "Cormorant"';x.fillText("abonetopick.com",W-70,96);x.textAlign="left";
   return c;
 }
-async function showCard(){const c=await drawCard(run());const img=document.getElementById("cardimg");if(img)img.src=c.toDataURL("image/png");}
+let CARD_KEY=null,CARD_URL=null;
+async function showCard(force){
+  const r=run();if(!r)return;const img=document.getElementById("cardimg");if(!img)return;
+  const key=JSON.stringify([r.role,r.grade,r.pips,r.completedAt,r.stats,r.perks,S.profile]);
+  if(!force&&key===CARD_KEY&&CARD_URL){img.src=CARD_URL;return;}
+  const c=await drawCard(r);
+  c.toBlob(b=>{if(!b)return;if(CARD_URL)URL.revokeObjectURL(CARD_URL);CARD_URL=URL.createObjectURL(b);CARD_KEY=key;const im=document.getElementById("cardimg");if(im)im.src=CARD_URL;},"image/png");
+}
 async function saveCard(){const r=run(),c=await drawCard(r),dl=await getDL();if(!dl){c.toBlob(b=>{if(!localSave(b,`a-bone-to-pick-${r.role}.png`))toast("long-press or right-click the card to save it.");else toast("card saved.");},"image/png");return;}
   c.toBlob(async b=>{try{await dl.save({filename:`a-bone-to-pick-${r.role}.png`,data:b});toast("card saved.");}catch(e){if(e&&e.code!=="declined")toast("the card couldn't be saved. long-press or right-click it instead.");}},"image/png");}
 
@@ -1330,7 +1344,7 @@ function overlayHTML(r,opt){
     ${(o.game||o.site)?`<div class="url">${[o.game?`game ${r.stats.matches+(r.inMatch?1:0)}`:"",o.site?"abonetopick.com":""].filter(Boolean).join(" / ")}</div>`:""}</div>`;
 }
 const OVF=[["grade","grade"],["pips","pips"],["track","grade track"],["bones","bones"],["char","character"],["perks","perks"],["curse","curse"],["bounties","bounties"],["game","game number"],["site","site link"]];
-let ovOpt={pos:"tr",show:Object.fromEntries(OVF.map(f=>[f[0],true]))};
+let ovOpt={pos:"tr",show:Object.fromEntries(OVF.map(f=>[f[0],["grade","track","bones"].includes(f[0])]))};
 function ovLink(){const on=OVF.filter(f=>ovOpt.show[f[0]]).map(f=>f[0]).join(",");return `https://abonetopick.com/overlay?code=YOUR-CODE&role=${S.role}&show=${on}`;}
 function openOverlay(){
   const w=document.createElement("div");w.className="stage-wrap";w.id="stage";
@@ -1374,8 +1388,8 @@ document.addEventListener("click",e=>{
   const b=e.target.closest("[data-action]"); if(!b||ui.rolling||ui.charRoll) return; const a=b.dataset.action;
   if(a==="totop"){goTo("top");return;}
   if(a==="mode"){setMode(isNight()?"day":"night");return;}
-  if(a==="roleflip"){slideSwitch();S.role=S.role==="survivor"?"killer":"survivor";ui.pick=null;ui.quip=null;save();render();const el=document.getElementById("app");el.classList.remove("fade");void el.offsetWidth;el.classList.add("fade");}
-  if(a==="role"){if(S.role===b.dataset.role)return;S.role=b.dataset.role;ui.pick=null;ui.quip=null;save();render();const el=document.getElementById("app");el.classList.remove("fade");void el.offsetWidth;el.classList.add("fade");}
+  if(a==="roleflip"){slideSwitch();S.role=S.role==="survivor"?"killer":"survivor";ui.pick=null;save();render();const el=document.getElementById("app");el.classList.remove("fade");void el.offsetWidth;el.classList.add("fade");}
+  if(a==="role"){if(S.role===b.dataset.role)return;S.role=b.dataset.role;ui.pick=null;save();render();const el=document.getElementById("app");el.classList.remove("fade");void el.offsetWidth;el.classList.add("fade");}
   if(a==="start"){setTimeout(()=>goTo("top"),0);}
   if(a==="start") startRun(S.role,+document.getElementById("sg").value,+(document.getElementById("sp")||{value:0}).value,(document.querySelector('input[name="pool"]:checked')||{value:"base"}).value);
   if(a==="roll") rollLoadout();
@@ -1405,8 +1419,7 @@ document.addEventListener("change",e=>{
 });
 rollover(); save(); render();
 (function warm(){const r=run();if(r){prefetch(r.perks,r.char,r.nextChar);}
-  const later=()=>["survivor","killer"].forEach(role=>{const rr=S.runs[role];const src=rr&&rr.pool==="all"?ALL[role]:DATA[role];prefetch(src.chars);});
-  setTimeout(()=>{window.requestIdleCallback?requestIdleCallback(later):later();},1500);})();
+})();
 </script>
 </body>
 </html>
