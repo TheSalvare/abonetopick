@@ -769,14 +769,14 @@ function iconNext(el){const key=el.dataset.icon,l=iconList(key.split("|")),i=+el
 
 /* ---------- logo ----------
    save your title artwork as images/icons/logo.svg (or .png / .webp). if none is found, the text title shows instead. */
-let LOGO=null, CARD_LOGO=null;
+let LOGO=null, CARD_MARK=null;
 function loadLogo(){const img=document.getElementById("logo"),txt=document.getElementById("wmtext");
   const list=iconList(isNight()?["logo-dark","logo"]:["logo"]);let i=0;
   img.onload=()=>{img.hidden=false;LOGO=img;if(txt)txt.hidden=true;};
   img.onerror=()=>{i++;if(i<list.length)img.src=list[i];else{img.hidden=true;LOGO=null;if(txt)txt.hidden=false;}};
   img.src=list[0];}
-(function loadCardLogo(){const list=iconList(["logo-dark","logo"]);let i=0;const im=new Image();
-  im.onload=()=>{CARD_LOGO=im;};im.onerror=()=>{i++;if(i<list.length)im.src=list[i];};im.src=list[0];})();
+(function loadCardMark(){const list=iconList(["logomark"]);let i=0;const im=new Image();
+  im.onload=()=>{CARD_MARK=im;};im.onerror=()=>{i++;if(i<list.length)im.src=list[i];};im.src=list[0];})();
 
 loadLogo();
 function setMode(m){const h=document.documentElement;syncScheme(m);if(!reduced){h.classList.add("theming");setTimeout(()=>h.classList.remove("theming"),500);}
@@ -1144,31 +1144,40 @@ async function drawAsciiCorner(x,src,W,H,opt={}){
   }
   x.drawImage(ASCII_LAYER[src],ax,ay);return true;
 }
-async function drawCard(r,noLogo){
+async function drawCard(r){
   await document.fonts.ready;
-  const W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
-  const cr="#F6F8EB",dim="#a39b95",Y="#FABB07",R="#D24026",G="#3FA874",tc=["#555B57","#80523B","#B7B7B8","#FABB07","#D24026"];
-  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#262626");g.addColorStop(1,"#191919");x.fillStyle=g;x.fillRect(0,0,W,H);
-  x.fillStyle=Y;x.fillRect(0,0,W,14);
+  const W=1080,H=1350,M=40,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  const cr="#F6F8EB",dim="#9d9f95",Y="#FABB07",R="#D24026",G="#3FA874",tc=["#555B57","#80523B","#B7B7B8","#FABB07","#D24026"];
+  const D=(sz)=>`700 ${sz}px "UnifrakturCook"`, B=(sz)=>`600 ${sz}px "Cormorant"`;
+  // background: darkens towards the bottom right, where the ascii portrait sits
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"#272727");g.addColorStop(1,"#141414");x.fillStyle=g;x.fillRect(0,0,W,H);
   {const mp0=topOf(r.stats.char);if(mp0){const src=(await resolveAscii(mp0.k,r.role))||(await resolveImg(mp0.k));if(src)await drawAsciiCorner(x,src,W,H);}}
-  let logoDrawn=false;
-  if(CARD_LOGO&&!noLogo){try{const h=120,w=Math.min(900,h*(CARD_LOGO.naturalWidth/CARD_LOGO.naturalHeight||4));x.drawImage(CARD_LOGO,90,82,w,h);x.getImageData(0,0,1,1);logoDrawn=true;}catch(e){return drawCard(r,true);}}
-  if(!logoDrawn){x.fillStyle=cr;x.font='700 100px "UnifrakturCook"';x.fillText("a bone to pick",90,180);}
-  x.fillStyle=dim;x.font='600 38px "Cormorant"';x.fillText(`${r.role} run, ${season(new Date(r.startedAt)).name}'s thirteenth reset`,92,238);
-  x.fillStyle=tc[Math.floor(r.grade/4)];x.font='700 128px "UnifrakturCook"';x.fillText(gradeName(r.grade),88,400);
-  x.fillStyle=r.completedAt?G:cr;x.font='700 40px "Cormorant"';x.fillText(r.completedAt?"climb complete":"still climbing",92,456);
-  for(let i=0;i<20;i++){const t=Math.floor(i/4);x.fillStyle=i<=r.grade?tc[t]:"#34312e";x.fillRect(92+i*45+t*10,490,38,12);}
-  const cs=topOf(r.stats.curse),tb=topOf(r.stats.bounty),bd=tb?DATA[r.role].bounties.find(b=>b.id===tb.k):null;
-  [[r.stats.matches,"matches",cr],[r.stats.earned,"bones earned",Y],[r.stats.spent,"bones spent",Y],[r.stats.curses,"times cursed",R]].forEach((s,i)=>{const cx=92+(i%2)*460,cy=630+Math.floor(i/2)*150;x.fillStyle=s[2];x.font='700 92px "UnifrakturCook"';x.fillText(String(s[0]),cx,cy);x.fillStyle=dim;x.font='600 36px "Cormorant"';x.fillText(s[1],cx,cy+44);});
-  x.font='600 36px "Cormorant"';let y=950;
-  if(cs){x.fillStyle=R;x.fillText(`most common curse: ${cs.k} (${cs.v}\u00d7)`,92,y);y+=50;}
-  if(bd){x.fillStyle=G;x.fillText(`favourite bounty: ${bd.n} (${tb.v}\u00d7)`,92,y,W-184);y+=50;}
-  const mp=topOf(r.stats.char);if(mp){x.fillStyle=cr;x.fillText(`most played: ${mp.k.toLowerCase()} (${mp.v}\u00d7)`,92,y,W-184);y+=50;}
-  x.fillStyle=dim;x.font='600 32px "Cormorant"';x.fillText("final perks",92,y+10);
-  if(r.perks.length)x.fillText(r.perks.join(", ").toLowerCase(),92,y+52,W-184);
-  x.fillStyle=cr;x.font='700 44px "Cormorant"';if(S.profile.tag)x.fillText(S.profile.tag,92,1215);
-  x.fillStyle=dim;x.font='600 32px "Cormorant"';if(S.profile.socials)x.fillText(S.profile.socials,92,1258,W-500);
-  x.textAlign="right";x.fillStyle=Y;x.font='700 30px "Cormorant"';x.fillText("abonetopick.com",W-70,96);x.textAlign="left";
+  // logomark, top right
+  if(CARD_MARK){try{const h=166,w=h*(CARD_MARK.naturalWidth/CARD_MARK.naturalHeight||1.08);x.drawImage(CARD_MARK,W-M+5-w,40,w,h);x.getImageData(0,0,1,1);}catch(e){}}
+  const t=Math.floor(r.grade/4);
+  x.fillStyle=cr;x.font=D(96);x.fillText(`${r.role} run`,M,130);
+  x.font=B(46);x.fillText(`${season(new Date(r.startedAt)).name} thirteenth reset`,M,196);
+  x.fillStyle=tc[t];x.font=D(100);x.fillText(gradeName(r.grade),M,372);
+  x.fillStyle=r.completedAt?G:cr;x.font=B(46);x.fillText(r.completedAt?"challenge complete":(r.role==="killer"?"still hooking":"still loopin"),M,438);
+  // grade bar, edge to edge
+  {const gap=10,tgap=22,seg=((W-2*M)-15*gap-4*tgap)/20;let bx=M;
+   for(let i=0;i<20;i++){const tt=Math.floor(i/4);x.fillStyle=i<=r.grade?tc[tt]:"#2f2f2c";x.fillRect(bx,478,seg,18);bx+=seg+(i%4===3?tgap:gap);}}
+  // stats row
+  [[r.stats.matches,"matches",cr],[r.stats.earned,"bones earned",Y],[r.stats.spent,"bones spent",Y],[r.stats.curses,"times cursed",R]].forEach((st,i)=>{
+    const cx=[M,284,604,872][i];const mw=(i<3?[284,604,872][i]:W-M+8)-cx-14;x.fillStyle=st[2];x.font=D(70);x.fillText(String(st[0]),cx,636,mw);x.fillStyle=dim;x.font=B(36);x.fillText(st[1],cx,690,mw);});
+  // most common
+  const cs=topOf(r.stats.curse),tb=topOf(r.stats.bounty),bd=tb?DATA[r.role].bounties.find(b=>b.id===tb.k):null,mp=topOf(r.stats.char);
+  x.fillStyle=cr;x.font=D(96);x.fillText("most common",M,860);
+  x.font=B(46);let y=926;
+  const line=(col,txt)=>{x.fillStyle=col;x.fillText(txt,M,y,W-2*M);y+=62;};
+  line(R,cs?`curse: ${cs.k} (${cs.v}x)`:"curse: none yet");
+  line(G,bd?`bounty: ${bd.n.replace(/\s*\(.*\)$/,"")} (${tb.v}x)`:"bounty: none yet");
+  line(cr,mp?`${r.role}: ${mp.k.toLowerCase()} (${mp.v}x)`:`${r.role}: none yet`);
+  // who + where
+  y=1188;x.font=B(46);
+  if(S.profile.tag){x.fillStyle=cr;x.fillText(S.profile.tag,M,y,W-2*M);y+=60;}
+  if(S.profile.socials){x.fillStyle=cr;x.fillText(S.profile.socials,M,y,W-2*M);y+=60;}
+  x.fillStyle=Y;x.fillText("abonetopick.xyz",M,Math.max(y,1308));
   return c;
 }
 let CARD_KEY=null,CARD_URL=null;
