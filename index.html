@@ -533,7 +533,7 @@ footer.band .twbtn{position:relative;display:inline-grid;place-items:center;widt
 .twbtn:hover .tw-liquid,.twbtn:focus-visible .tw-liquid,.twbtn.filled .tw-liquid{top:-26px}
 .tw-ic{display:grid;place-items:center;width:20px;height:20px;transition:opacity .3s ease,transform .45s ease}
 .tw-ic svg{width:100%;height:100%}
-.tw-text{font-weight:700;font-size:16px;color:var(--orange);opacity:0;transform:translateY(8px);transition:opacity .15s ease,transform .2s ease;white-space:nowrap}
+.tw-text{font-weight:700;font-size:14px;color:var(--orange);opacity:0;transform:translateY(8px);transition:opacity .15s ease,transform .2s ease;white-space:nowrap}
 .twbtn:hover .tw-ic,.twbtn:focus-visible .tw-ic,.twbtn.filled .tw-ic{opacity:0;transform:translateY(-8px);transition-delay:.2s}
 .twbtn:hover .tw-text,.twbtn:focus-visible .tw-text,.twbtn.filled .tw-text{opacity:1;transform:none;transition:opacity .3s ease .5s,transform .4s cubic-bezier(.34,1.56,.64,1) .5s}
 footer.band .twbtn:focus-visible{outline:2px solid #212121;outline-offset:3px}
@@ -691,8 +691,8 @@ footer.band a{color:#F6F8EB;text-decoration-thickness:1.5px;text-underline-offse
 </div>
 <footer class="band">
   <div class="band-in">
-    <div>not affiliated with behaviour interactive or dead by daylight<br>designed by thesalvare</div>
-    <div class="band-r"><a class="twbtn" href="https://www.twitch.tv/georose" target="_blank" rel="noopener" aria-label="come say hello on twitch"><span class="tw-liquid" aria-hidden="true"></span><span class="tw-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg></span><span class="tw-text" aria-hidden="true">come say hello</span></a><span>created for fun by georose</span></div>
+    <div>not affiliated with bhvr interactive or dead by daylight<br>designed by thesalvare</div>
+    <div class="band-r"><a class="twbtn" href="https://www.twitch.tv/georose" target="_blank" rel="noopener" aria-label="come and say hello on twitch"><span class="tw-liquid" aria-hidden="true"></span><span class="tw-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg></span><span class="tw-text" aria-hidden="true">come and say hello</span></a><span>created for fun by georose</span></div>
     <button class="modesw" id="modesw" data-action="mode" data-active="day" aria-label="switch to dark mode">
       <span class="ms-knob" aria-hidden="true"></span>
       <span class="ms-slot ms-sun" aria-hidden="true"><svg class="ms-fb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 1.8v2.6M12 19.6v2.6M1.8 12h2.6M19.6 12h2.6M4.8 4.8l1.8 1.8M17.4 17.4l1.8 1.8M4.8 19.2l1.8-1.8M17.4 6.6l1.8-1.8"/></g></svg><span id="ms-sun"></span></span><span class="ms-slot ms-moon" aria-hidden="true"><svg class="ms-fb" viewBox="0 0 24 24"><path d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8a8.6 8.6 0 1 0 10.8 10.8z"/></svg><span id="ms-moon"></span></span>
@@ -1216,7 +1216,10 @@ function tabBodyHTML(r){
       <div class="stat y"><b>${r.stats.earned}</b><span>bones earned</span></div>
       <div class="stat y"><b>${r.stats.spent}</b><span>bones spent</span></div>
       <div class="stat r"><b>${r.stats.curses}</b><span>curses</span></div></div>
-      ${cs?`<p class="sm dim" style="margin-top:14px">most common curse: <b style="color:var(--red)">${esc(cs.k)}</b>, ${cs.v} time${cs.v>1?"s":""}.</p>`:""}`;
+      ${(()=>{const tb=topOf(r.stats.bounty),bd=tb?DATA[r.role].bounties.find(b=>b.id===tb.k):null;
+        const l1=cs?`most common curse: <b style="color:var(--red)">${esc(cs.k)}</b>, ${cs.v} time${cs.v>1?"s":""}.`:"";
+        const l2=bd?`most common bounty: <b style="color:var(--green)">${esc(bd.n)}</b>, ${tb.v} time${tb.v>1?"s":""}.`:"";
+        return (l1||l2)?`<p class="sm dim" style="margin-top:14px;line-height:1.7">${[l1,l2].filter(Boolean).join("<br>")}</p>`:"";})()}`;
   else if(ui.tab==="history"){const canUndo=r.snaps&&r.snaps.length;tabBody=r.log.length?`<div class="history"><table><thead><tr><th>game</th><th>result</th><th>grade after (pips)</th><th>bones</th><th>curse</th><th></th></tr></thead><tbody>${r.log.slice(0,80).map((l,i)=>`<tr><td class="n">${l.n!=null?l.n:r.stats.matches-i}</td><td class="res-${l.res}">${l.res==="none"?"no pip":l.res==="double"?"+2 pips":l.res==="grade"?"graded up":"+1 pip"}</td><td>${gradeName(l.grade)}${l.up?" \u2191":""}${l.pips!=null&&l.grade<FINAL?`<span class="dim"> (${l.pips}/${pipsNeed(l.grade)})</span>`:""}</td><td>${l.bones?"+"+l.bones:"0"}</td><td>${l.curse?`got ${esc(l.curse)}`:(l.served?`served ${esc(l.served)}`:"")}</td><td>${i===0&&canUndo?`<button class="undo" data-action="undo">undo</button>`:""}</td></tr>`).join("")}</tbody></table></div>
     <p class="dim sm" style="margin-top:10px">made a mistake? undo steps back one game at a time, up to the last ${Math.min(15,(r.snaps||[]).length)||15} games. for anything older, correct your grade or bones in settings.</p>`:`<p class="dim">your matches will show up here once you log them.</p>`;}
   else tabBody=`<div class="cardwrap"><img id="cardimg" class="cardprev" alt="your share card"><div class="stack" style="gap:12px">
@@ -1452,7 +1455,7 @@ rollover(); save(); render();
     if(!vis){armed=true;return;}
     if(busy||!armed)return;busy=true;armed=false;
     setTimeout(()=>tb.classList.add("filled"),250);
-    setTimeout(()=>{tb.classList.remove("filled");setTimeout(()=>{busy=false;},1000);},250+900+3000);
+    setTimeout(()=>{tb.classList.remove("filled");setTimeout(()=>{busy=false;},1000);},250+900+2000);
   },{threshold:.9});io.observe(tb);})();
 (function warm(){const r=run();if(r){prefetch(r.perks,r.char,r.nextChar);}
 })();
