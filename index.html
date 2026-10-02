@@ -1445,7 +1445,15 @@ document.addEventListener("change",e=>{
 });
 rollover(); save(); render();
 (function(){const tb=document.querySelector(".twbtn");if(!tb||!matchMedia("(hover: none)").matches||!("IntersectionObserver" in window))return;
-  const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){setTimeout(()=>tb.classList.add("filled"),250);io.disconnect();}},{threshold:.9});io.observe(tb);})();
+  // phones: fill when the button comes into view, hold "come say hello" for 3 seconds, then drain back to the logo.
+  // plays again the next time it scrolls back into view.
+  let busy=false,armed=true;
+  const io=new IntersectionObserver(es=>{const vis=es.some(e=>e.isIntersecting);
+    if(!vis){armed=true;return;}
+    if(busy||!armed)return;busy=true;armed=false;
+    setTimeout(()=>tb.classList.add("filled"),250);
+    setTimeout(()=>{tb.classList.remove("filled");setTimeout(()=>{busy=false;},1000);},250+900+3000);
+  },{threshold:.9});io.observe(tb);})();
 (function warm(){const r=run();if(r){prefetch(r.perks,r.char,r.nextChar);}
 })();
 </script>
