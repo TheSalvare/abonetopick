@@ -538,6 +538,8 @@ footer.band .twbtn{position:relative;display:inline-grid;place-items:center;widt
 .twbtn:hover .tw-text,.twbtn:focus-visible .tw-text,.twbtn.filled .tw-text{opacity:1;transform:none;transition:opacity .3s ease .5s,transform .4s cubic-bezier(.34,1.56,.64,1) .5s}
 footer.band .twbtn:focus-visible{outline:2px solid #212121;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){.tw-liquid{animation:none;border-radius:0;transition:none}}
+body.overlay-only{background:transparent!important}
+body.overlay-only>*:not(.ovroot){display:none!important}
 /* copy button */
 .cpbtn{position:relative;width:42px;height:42px;flex:none;display:grid;place-items:center;background:#191919;border:2px solid #383838;border-radius:var(--rs);color:#F6F8EB;cursor:pointer;padding:0;transition:border-color .2s,transform .2s cubic-bezier(.34,1.56,.64,1)}
 .cpbtn:hover{border-color:#F6F8EB;transform:translateY(-2px)}
@@ -1237,6 +1239,7 @@ function tabBodyHTML(r){
   else tabBody=`<div class="cardwrap"><img id="cardimg" class="cardprev" alt="your share card"><div class="stack" style="gap:12px">
       <p class="dim">${r.completedAt?"your climb is complete. save your card and share it.":"this is your card so far. finish at iridescent i for the full brag."}</p>
       <p class="dim sm">add your gamertag and socials in settings and they'll appear on the card.</p>
+      <p class="dim sm">if your card isn't showing yet, give it a moment. it's loading your character image and putting your card together.</p>
       <div class="row" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn y" data-action="savecard">save card</button><button class="btn ghost" data-action="settings">edit details</button></div></div></div>`;
   return tabBody;
 }
@@ -1382,17 +1385,17 @@ function overlayHTML(r,opt){
     ${o.perks&&r.perks.length?`<div class="perks">${r.perks.map(p=>`<span>${esc(p)}</span>`).join("")}</div>`:""}
     ${o.curse?`<div class="line"><b>curse</b>${r.curse?`<span class="cur">${esc(r.curse.n)}: ${esc(r.curse.d)}</span>`:`<span class="ok">none</span>`}</div>`:""}
     ${o.bounties&&bounties.length?`<div class="line"><b>bounties</b><span class="bty">${bounties.map(b=>`<span style="display:block">${esc(b.n)}</span>`).join("")}</span></div>`:""}
-    ${(o.game||o.site)?`<div class="url">${[o.game?`game ${r.stats.matches+(r.inMatch?1:0)}`:"",o.site?"abonetopick.com":""].filter(Boolean).join(" / ")}</div>`:""}</div>`;
+    ${(o.game||o.site)?`<div class="url">${[o.game?`game ${r.stats.matches+(r.inMatch?1:0)}`:"",o.site?"abonetopick.xyz":""].filter(Boolean).join(" / ")}</div>`:""}</div>`;
 }
 const OVF=[["grade","grade"],["pips","pips"],["track","grade track"],["bones","bones"],["char","character"],["perks","perks"],["curse","curse"],["bounties","bounties"],["game","game number"],["site","site link"]];
 let ovOpt={pos:"tr",show:Object.fromEntries(OVF.map(f=>[f[0],["grade","track","bones"].includes(f[0])]))};
-function ovLink(){const on=OVF.filter(f=>ovOpt.show[f[0]]).map(f=>f[0]).join(",");return `https://abonetopick.com/overlay?code=YOUR-CODE&role=${S.role}&show=${on}`;}
+function ovLink(){const on=OVF.filter(f=>ovOpt.show[f[0]]).map(f=>f[0]).join(",");return `https://www.abonetopick.xyz/?overlay&role=${S.role}&show=${on}`;}
 function openOverlay(){
   const w=document.createElement("div");w.className="stage-wrap";w.id="stage";
   const draw=()=>{w.innerHTML=`<div class="stage-bar"><h2>overlay preview</h2><div class="opts">
       <select id="ovpos"><option value="tr">top right</option><option value="tl">top left</option><option value="br">bottom right</option><option value="bl">bottom left</option></select>
       <button class="iconbtn hb" data-ov="close">close</button></div></div>
-    <div class="stage"><div class="fake"><div class="fake-in"><span class="fake-t">your gameplay here</span><p class="fake-note">this is a 1920\u00d71080 stream frame scaled to fit. the link goes live once the site is on abonetopick.com, and the overlay updates after every match you log.</p></div></div><div class="fog1"></div><div class="ov-pos ${ovOpt.pos}">${overlayHTML(run(),ovOpt)}</div></div>
+    <div class="stage"><div class="fake"><div class="fake-in"><span class="fake-t">your gameplay here</span><p class="fake-note">this is a 1920\u00d71080 stream frame scaled to fit. the link goes live once the site is on abonetopick.xyz, and the overlay updates after every match you log.</p></div></div><div class="fog1"></div><div class="ov-pos ${ovOpt.pos}">${overlayHTML(run(),ovOpt)}</div></div>
     <div class="ovtoggles">${OVF.map(f=>`<label><input type="checkbox" data-f="${f[0]}" ${ovOpt.show[f[0]]?"checked":""}>${f[1]}</label>`).join("")}</div>
     <div class="ovlink"><span>your obs link</span><code>${esc(ovLink())}</code><button class="cpbtn" data-ov="copy" aria-label="copy obs link"><svg class="cp-fb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="2.6"/><path d="M15.5 5.2V5a2 2 0 0 0-2-2H5.5a2.5 2.5 0 0 0-2.5 2.5v8a2 2 0 0 0 2 2h.3"/></svg><svg class="cp-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="cp-img">${iconImg(["copy"])}</span></button></div>
 `;
@@ -1405,7 +1408,7 @@ function openOverlay(){
       cb.classList.add("done");setTimeout(()=>cb.classList.remove("done"),1600);toast(ok?"obs link copied.":"select the link and copy it.");}});
 }
 const QS=new URLSearchParams(location.search);
-if(QS.has("overlay")){if(QS.get("show")){const on=QS.get("show").split(",");OVF.forEach(f=>ovOpt.show[f[0]]=on.includes(f[0]));}if(QS.get("role"))S.role=QS.get("role")==="killer"?"killer":"survivor";document.body.classList.add("overlay-only");const o=document.createElement("div");o.style.padding="12px";document.body.appendChild(o);const tick=()=>{o.innerHTML=overlayHTML(run(),ovOpt);};tick();setInterval(()=>{const f=load();if(f)S=f;tick();},2000);}
+if(QS.has("overlay")){if(QS.get("show")){const on=QS.get("show").split(",");OVF.forEach(f=>ovOpt.show[f[0]]=on.includes(f[0]));}if(QS.get("role"))S.role=QS.get("role")==="killer"?"killer":"survivor";document.body.classList.add("overlay-only");const o=document.createElement("div");o.className="ovroot";o.style.padding="12px";document.body.appendChild(o);const tick=()=>{o.innerHTML=overlayHTML(run(),ovOpt);};tick();setInterval(()=>{const f=load();if(f)S=f;tick();},2000);}
 
 /* ---------- role switch motion ---------- */
 function slideSwitch(){
