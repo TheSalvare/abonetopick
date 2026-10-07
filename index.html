@@ -488,7 +488,8 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 .passx::after{transform:translate(-50%,-50%) rotate(-45deg)}
 .passlist{display:flex;flex-wrap:wrap;gap:8px}
 .passchip{border:2px solid #212121;background:transparent;color:#212121;border-radius:var(--rs);padding:6px 12px;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
-.passchip:hover{background:#212121;color:#F6F8EB}
+.passchip:hover:not(:disabled){background:#212121;color:#F6F8EB}
+.passchip:disabled{opacity:.45;cursor:not-allowed}
 /* mobile header: small logo left, buttons right */
 @media (max-width:620px){
   header.top{flex-direction:row;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:10px}
@@ -540,6 +541,7 @@ footer.band .twbtn:focus-visible{outline:2px solid #212121;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){.tw-liquid{animation:none;border-radius:0;transition:none}}
 body.overlay-only{background:transparent!important}
 body.overlay-only>*:not(.ovroot){display:none!important}
+.ovnote{max-width:1280px;width:100%;margin:0 auto;color:#FABB07;font-weight:700;font-size:15px}
 /* copy button */
 .cpbtn{position:relative;width:42px;height:42px;flex:none;display:grid;place-items:center;background:#191919;border:2px solid #383838;border-radius:var(--rs);color:#F6F8EB;cursor:pointer;padding:0;transition:border-color .2s,transform .2s cubic-bezier(.34,1.56,.64,1)}
 .cpbtn:hover{border-color:#F6F8EB;transform:translateY(-2px)}
@@ -917,7 +919,25 @@ function season(d=new Date()){
 /* ---------- storage ---------- */
 const KEY="abtp:v3"; let mem=null;
 function load(){try{const s=localStorage.getItem(KEY); if(s) return JSON.parse(s);}catch(e){} return mem;}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){mem=S;}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){mem=S;}pushOverlay();}
+
+/* ---------- overlay relay ----------
+   paste your cloudflare worker address between the quotes, e.g. "https://abtp-relay.yourname.workers.dev" */
+const RELAY_URL="https://abtp-relay.thesalvareart.workers.dev";
+const IS_OVERLAY_PAGE=new URLSearchParams(location.search).has("overlay");
+function randId(n){const a="abcdefghijkmnpqrstuvwxyz23456789",b=new Uint32Array(n);crypto.getRandomValues(b);return [...b].map(v=>a[v%a.length]).join("");}
+function ovCreds(){if(!S.overlay||!S.overlay.code){S.overlay={code:randId(10),key:randId(32)};try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}return S.overlay;}
+function relayPayload(){const out={};["survivor","killer"].forEach(role=>{const r=S.runs[role];
+  out[role]=r?{grade:r.grade,pips:r.pips||0,bones:r.bones,char:r.inMatch?r.char:"",inMatch:!!r.inMatch,perks:r.perks,curse:r.curse?{n:r.curse.n,d:r.curse.d}:null,bounties:r.inMatch?r.bounties:[],matches:r.stats.matches}:null;});
+  return out;}
+let pushT=null,lastPush="";
+function pushOverlay(now){
+  if(!RELAY_URL||IS_OVERLAY_PAGE||!S||!S.overlay||!S.overlay.code)return;
+  clearTimeout(pushT);
+  pushT=setTimeout(()=>{const data=relayPayload(),body=JSON.stringify(data);if(body===lastPush&&!now)return;
+    fetch(`${RELAY_URL}/state?code=${S.overlay.code}`,{method:"POST",headers:{"Content-Type":"text/plain"},keepalive:true,
+      body:JSON.stringify({key:S.overlay.key,data})}).then(res=>{if(res.ok)lastPush=body;}).catch(()=>{});},now?0:1200);
+}
 let S=load()||{v:3,role:"survivor",profile:{tag:"",socials:""},runs:{survivor:null,killer:null},archive:[]};
 let ui={slotSpin:null,landedSlot:null,setup:{grade:0,pips:0,pool:"base"},charRoll:false,pick:null,rolling:false,landed:false,tab:"stats",quip:null};
 function rollover(){const cur=season().id;for(const r of ["survivor","killer"]){const x=S.runs[r];if(x&&x.season!==cur){S.archive.unshift(x);S.archive=S.archive.slice(0,24);S.runs[r]=null;}}}
@@ -1106,8 +1126,9 @@ function openSettings(){
       <div class="field"><label for="soc">socials</label><input id="soc" value="${esc(S.profile.socials)}" maxlength="80" placeholder="twitch.tv/yourname"></div>
     </div>
     ${(()=>{const x=passed(S.role),all=[...x.chars.map(n=>["chars",n]),...x.perks.map(n=>["perks",n])];
-      return `<div class="dsec"><h3>passed in access all</h3><p class="dim sm">${all.length?`the ${S.role}s and perks you've passed on. tap one to put it back in your roster.`:`nothing passed yet. in an access all run, use the \u00d7 on a perk or ${S.role} you don't have.`}</p>
-      ${all.length?`<div class="passlist">${all.map(([k,n])=>`<button class="passchip" data-a="unpass" data-k="${k}" data-n="${esc(n)}">${esc(n)} <span aria-hidden="true">\u21ba</span></button>`).join("")}</div>`:""}</div>`;})()}
+      const locked=!!S.runs[S.role];
+      return `<div class="dsec"><h3>passed in access all</h3><p class="dim sm">${all.length?(locked?`the ${S.role}s and perks you've passed on. you can put them back between runs, once this run is finished or abandoned.`:`the ${S.role}s and perks you've passed on. tap one to put it back in your roster.`):`nothing passed yet. in an access all run, use the \u00d7 on a perk or ${S.role} you don't have.`}</p>
+      ${all.length?`<div class="passlist">${all.map(([k,n])=>`<button class="passchip" data-a="unpass" data-k="${k}" data-n="${esc(n)}" ${locked?"disabled":""}>${esc(n)} ${locked?"":`<span aria-hidden="true">\u21ba</span>`}</button>`).join("")}</div>`:""}</div>`;})()}
     <div class="dsec"><h3>backup</h3>
       <p class="dim sm">your progress lives in this browser. save a backup so you can restore it if you clear your cache or switch devices.</p>
       <div class="btnrow"><button class="btn" data-a="copy">copy backup code</button><button class="btn ghost" data-a="dl">download backup</button></div>
@@ -1122,7 +1143,7 @@ function openSettings(){
       <div class="field"><label>correct your bones</label><div class="bonesadj"><button class="btn ghost" data-a="b-">−</button><span class="v" id="badj">${r.bones}</span><button class="btn ghost" data-a="b+">+</button></div></div>
       <div id="abandon"><button class="btn r" data-a="reset">abandon this run</button></div></div>`:""}`,
     (b)=>{const a=b.dataset.a;if(a==="copy")copyCode();if(a==="dl")downloadBackup();if(a==="import")importCode(document.getElementById("codebox").value);
-      if(a==="unpass"){const x=passed(S.role)[b.dataset.k];const i=x.indexOf(b.dataset.n);if(i>-1)x.splice(i,1);save();toast(`${b.dataset.n.toLowerCase()} is back in your roster.`);openSettings();}
+      if(a==="unpass"){if(S.runs[S.role]){toast("you can put these back between runs.");return;}const x=passed(S.role)[b.dataset.k];const i=x.indexOf(b.dataset.n);if(i>-1)x.splice(i,1);save();toast(`${b.dataset.n.toLowerCase()} is back in your roster.`);openSettings();}
       if(a==="b-"||a==="b+"){const r=run();r.bones=Math.max(0,r.bones+(a==="b+"?1:-1));save();document.getElementById("badj").textContent=r.bones;render();}
       if(a==="reset"){document.getElementById("abandon").innerHTML=`<p class="sm" style="margin-bottom:10px">abandon your ${S.role} run? this can't be undone unless you've saved a backup.</p><div class="btnrow"><button class="btn r" data-a="reset-yes">yes, abandon it</button><button class="btn ghost" data-a="reset-no">keep my run</button></div>`;document.getElementById("abandon").scrollIntoView({behavior:reduced?"auto":"smooth",block:"end"});}
       if(a==="reset-no"){document.getElementById("abandon").innerHTML=`<button class="btn r" data-a="reset">abandon this run</button>`;}
@@ -1389,15 +1410,17 @@ function overlayHTML(r,opt){
 }
 const OVF=[["grade","grade"],["pips","pips"],["track","grade track"],["bones","bones"],["char","character"],["perks","perks"],["curse","curse"],["bounties","bounties"],["game","game number"],["site","site link"]];
 let ovOpt={pos:"tr",show:Object.fromEntries(OVF.map(f=>[f[0],["grade","track","bones"].includes(f[0])]))};
-function ovLink(){const on=OVF.filter(f=>ovOpt.show[f[0]]).map(f=>f[0]).join(",");return `https://www.abonetopick.xyz/?overlay&role=${S.role}&show=${on}`;}
-function openOverlay(){
+function ovLink(){const on=OVF.filter(f=>ovOpt.show[f[0]]).map(f=>f[0]).join(","),c=ovCreds();
+  const base=/^https?:/.test(location.protocol)?location.origin+location.pathname:"https://www.abonetopick.xyz/";
+  return `${base}?overlay&code=${c.code}&role=${S.role}&show=${on}`;}
+function openOverlay(){ovCreds();pushOverlay(true);
   const w=document.createElement("div");w.className="stage-wrap";w.id="stage";
   const draw=()=>{w.innerHTML=`<div class="stage-bar"><h2>overlay preview</h2><div class="opts">
       <select id="ovpos"><option value="tr">top right</option><option value="tl">top left</option><option value="br">bottom right</option><option value="bl">bottom left</option></select>
       <button class="iconbtn hb" data-ov="close">close</button></div></div>
     <div class="stage"><div class="fake"><div class="fake-in"><span class="fake-t">your gameplay here</span><p class="fake-note">this is a 1920\u00d71080 stream frame scaled to fit. the link goes live once the site is on abonetopick.xyz, and the overlay updates after every match you log.</p></div></div><div class="fog1"></div><div class="ov-pos ${ovOpt.pos}">${overlayHTML(run(),ovOpt)}</div></div>
     <div class="ovtoggles">${OVF.map(f=>`<label><input type="checkbox" data-f="${f[0]}" ${ovOpt.show[f[0]]?"checked":""}>${f[1]}</label>`).join("")}</div>
-    <div class="ovlink"><span>your obs link</span><code>${esc(ovLink())}</code><button class="cpbtn" data-ov="copy" aria-label="copy obs link"><svg class="cp-fb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="2.6"/><path d="M15.5 5.2V5a2 2 0 0 0-2-2H5.5a2.5 2.5 0 0 0-2.5 2.5v8a2 2 0 0 0 2 2h.3"/></svg><svg class="cp-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="cp-img">${iconImg(["copy"])}</span></button></div>
+    ${RELAY_URL?"":`<p class="ovnote">obs link is not connected yet. it starts working once the overlay relay is set up.</p>`}<div class="ovlink"><span>your obs link</span><code>${esc(ovLink())}</code><button class="cpbtn" data-ov="copy" aria-label="copy obs link"><svg class="cp-fb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="2.6"/><path d="M15.5 5.2V5a2 2 0 0 0-2-2H5.5a2.5 2.5 0 0 0-2.5 2.5v8a2 2 0 0 0 2 2h.3"/></svg><svg class="cp-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="cp-img">${iconImg(["copy"])}</span></button></div>
 `;
     w.querySelector("#ovpos").value=ovOpt.pos;};
   draw();document.body.appendChild(w);document.body.style.overflow="hidden";
@@ -1408,7 +1431,12 @@ function openOverlay(){
       cb.classList.add("done");setTimeout(()=>cb.classList.remove("done"),1600);toast(ok?"obs link copied.":"select the link and copy it.");}});
 }
 const QS=new URLSearchParams(location.search);
-if(QS.has("overlay")){if(QS.get("show")){const on=QS.get("show").split(",");OVF.forEach(f=>ovOpt.show[f[0]]=on.includes(f[0]));}if(QS.get("role"))S.role=QS.get("role")==="killer"?"killer":"survivor";document.body.classList.add("overlay-only");const o=document.createElement("div");o.className="ovroot";o.style.padding="12px";document.body.appendChild(o);const tick=()=>{o.innerHTML=overlayHTML(run(),ovOpt);};tick();setInterval(()=>{const f=load();if(f)S=f;tick();},2000);}
+if(QS.has("overlay")){if(QS.get("show")){const on=QS.get("show").split(",");OVF.forEach(f=>ovOpt.show[f[0]]=on.includes(f[0]));}if(QS.get("role"))S.role=QS.get("role")==="killer"?"killer":"survivor";document.body.classList.add("overlay-only");const o=document.createElement("div");o.className="ovroot";o.style.padding="12px";document.body.appendChild(o);const code=(QS.get("code")||"").toLowerCase();
+  if(code&&RELAY_URL){let last=null;
+    const pull=()=>fetch(`${RELAY_URL}/state?code=${encodeURIComponent(code)}`,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{
+      const d=j&&j.data&&j.data[S.role];last=d?{...d,role:S.role,stats:{matches:d.matches||0}}:null;o.innerHTML=overlayHTML(last,ovOpt);}).catch(()=>{});
+    o.innerHTML=overlayHTML(null,ovOpt);pull();setInterval(pull,4000);}
+  else{const tick=()=>{o.innerHTML=overlayHTML(run(),ovOpt);};tick();setInterval(()=>{const f=load();if(f)S=f;tick();},2000);}}
 
 /* ---------- role switch motion ---------- */
 function slideSwitch(){
@@ -1461,7 +1489,7 @@ document.addEventListener("change",e=>{
   if(e.target.id==="fixpips"){const r=run();r.pips=+e.target.value;save();render();toast(`pips set to ${r.pips}.`);}
   if(e.target.id==="fixgrade"){const r=run();r.grade=+e.target.value;r.pips=0;r.completedAt=r.grade===FINAL?(r.completedAt||Date.now()):null;save();render();toast(`grade set to ${gradeName(r.grade)}.`);}
 });
-rollover(); save(); render();
+rollover(); save(); render(); pushOverlay(true);
 (function(){const tb=document.querySelector(".twbtn");if(!tb||!matchMedia("(hover: none)").matches||!("IntersectionObserver" in window))return;
   // phones: fill when the button comes into view, hold "come say hello" for 3 seconds, then drain back to the logo.
   // plays again the next time it scrolls back into view.
