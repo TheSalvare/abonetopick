@@ -909,11 +909,13 @@ const SHOP=[
 const BONE='<img class="bone-i" src="images/icons/bone.png" alt="" onerror="this.style.visibility=\'hidden\'">';
 
 /* ---------- season ---------- */
+/* the rank reset lands at 15:00 UTC on the 13th (4pm in the UK during summer time) */
+const RESET_HOUR_UTC=15;
 function season(d=new Date()){
-  let y=d.getFullYear(),m=d.getMonth();
-  if(d.getDate()<13){m--; if(m<0){m=11;y--;}}
-  const start=new Date(y,m,13), end=new Date(y,m+1,13);
-  return {id:`${y}-${String(m+1).padStart(2,"0")}`,start,end,name:start.toLocaleString("en-GB",{month:"long"}).toLowerCase(),daysLeft:Math.ceil((end-d)/864e5)};
+  let y=d.getUTCFullYear(),m=d.getUTCMonth();
+  if(d<new Date(Date.UTC(y,m,13,RESET_HOUR_UTC))){m--; if(m<0){m=11;y--;}}
+  const start=new Date(Date.UTC(y,m,13,RESET_HOUR_UTC)), end=new Date(Date.UTC(y,m+1,13,RESET_HOUR_UTC));
+  return {id:`${y}-${String(m+1).padStart(2,"0")}`,start,end,name:start.toLocaleString("en-GB",{month:"long",timeZone:"UTC"}).toLowerCase(),daysLeft:Math.ceil((end-d)/864e5)};
 }
 
 /* ---------- storage ---------- */
@@ -940,7 +942,10 @@ function pushOverlay(now){
 }
 let S=load()||{v:3,role:"survivor",profile:{tag:"",socials:""},runs:{survivor:null,killer:null},archive:[]};
 let ui={slotSpin:null,landedSlot:null,setup:{grade:0,pips:0,pool:"base"},charRoll:false,pick:null,rolling:false,landed:false,tab:"stats",quip:null};
-function rollover(){const cur=season().id;for(const r of ["survivor","killer"]){const x=S.runs[r];if(x&&x.season!==cur){S.archive.unshift(x);S.archive=S.archive.slice(0,24);S.runs[r]=null;}}}
+function rollover(){const cur=season().id;S.archive=S.archive||[];for(const r of ["survivor","killer"]){const x=S.runs[r];
+  if(x&&x.season<cur){S.archive.unshift(x);S.archive=S.archive.slice(0,24);S.runs[r]=null;}
+  // an older version reset at midnight instead of reset time: put a run that was packed away early back
+  if(!S.runs[r]){const i=S.archive.findIndex(a=>a&&a.role===r&&a.season===cur);if(i>-1){S.runs[r]=S.archive.splice(i,1)[0];}}}}
 
 /* ---------- helpers ---------- */
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
