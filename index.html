@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="only light" id="cs-meta">
 <title>a bone to pick</title>
-<link rel="icon" type="image/png" href="images/icons/favicon.png">
-<link rel="apple-touch-icon" href="images/icons/favicon.png">
+<link rel="icon" type="image/png" href="img/icons/favicon.png">
+<link rel="apple-touch-icon" href="img/icons/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600;700&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
@@ -666,6 +666,25 @@ footer.band a{color:#F6F8EB;text-decoration-thickness:1.5px;text-underline-offse
   .rs-label{font-size:21px;letter-spacing:.24em}
   .panel{padding:20px}
 }
+/* small phones (down to 320px) */
+@media (max-width:400px){
+  .wrap{padding-left:12px;padding-right:12px}
+  .panel{padding:16px}
+  .setup{padding:18px}
+  .chips{gap:8px}
+  .chip{min-width:0;flex:1 1 0;padding:10px 12px}
+  .loadout{grid-template-columns:repeat(2,1fr);row-gap:18px}
+  .perk .name{word-break:normal;overflow-wrap:anywhere}
+  .kit{grid-template-columns:1fr}
+  .shop button{grid-template-columns:52px 1fr;padding:14px}
+  .stickybar{gap:8px}
+  .band{font-size:15px}
+  .perk .name{height:auto;-webkit-line-clamp:2}
+  dialog{width:calc(100vw - 20px);max-width:none}
+  .dhead{padding:16px}
+  .dbody{padding:4px 16px 18px}
+  .dbody > *, .dbody .btnrow > *{max-width:100%;min-width:0}
+}
 </style>
 </head>
 <body>
@@ -695,7 +714,7 @@ footer.band a{color:#F6F8EB;text-decoration-thickness:1.5px;text-underline-offse
 </div>
 <footer class="band">
   <div class="band-in">
-    <div>not affiliated with bhvr interactive or dead by daylight<br>designed by thesalvare</div>
+    <div>not affiliated with bhvr interactive or dbd<br>designed by thesalvare</div>
     <div class="band-r"><a class="twbtn" href="https://www.twitch.tv/georose" target="_blank" rel="noopener" aria-label="come and say hello on twitch"><span class="tw-liquid" aria-hidden="true"></span><span class="tw-ic" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg></span><span class="tw-text" aria-hidden="true">come and say hello</span></a><span>created for fun by georose</span></div>
     <button class="modesw" id="modesw" data-action="mode" data-active="day" aria-label="switch to dark mode">
       <span class="ms-knob" aria-hidden="true"></span>
@@ -710,62 +729,49 @@ footer.band a{color:#F6F8EB;text-decoration-thickness:1.5px;text-underline-offse
 
 <script>
 /* ---------- images ----------
-   put images in "images/base/", "images/all/" or "images/" next to this file, named after
-   the perk or character, e.g. images/Sprint Burst.png or images/The Nurse.webp.
-   punctuation, accents and capitals don't matter; png, webp, jpg and jpeg all work. */
-const IMG_DIRS=["images/base/","images/all/","images/"], IMG_EXT=["png","webp","jpg","jpeg"], IMG_CACHE={};
-function imgNames(name){
-  const plain=n=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  const v=new Set();
-  const add=n=>{n=n.replace(/\s+/g," ").trim();if(n)v.add(n);};
-  [name,plain(name)].forEach(n=>{
-    add(n.replace(/:/g,""));add(n.replace(/:/g," "));add(n.replace(/[:']/g,""));add(n.replace(/[:'&]/g,"").replace(/&/g,""));
-    add(n.replace(/:/g,"").replace(/&/g,"and"));add(n.replace(/[:']/g,"").replace(/&/g,"and"));
-    if(/^The /.test(n))add(n.replace(/^The /,"").replace(/:/g,""));
-  });
-  if(name==="Bill Overbeck"){add("William Overbeck");add("William Bill Overbeck");add("Bill");}
-  const isBase=typeof DATA!=="undefined"&&["survivor","killer"].some(r=>DATA[r].chars.includes(name)||DATA[r].perks.includes(name));
-  const dirs=isBase?["images/base/","images/all/","images/"]:["images/all/","images/base/","images/"];
-  const out=[];dirs.forEach(d=>v.forEach(n=>IMG_EXT.forEach(e=>out.push(d+encodeURIComponent(n).replace(/'/g,"%27")+"."+e))));return out;
-}
-/* find an image ahead of time: checks likely filenames in parallel batches, best match first */
-const IMG_PENDING={};
-function probe(src){return new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=src;});}
-/* the entity secretly picks your next character in advance, so the portrait is ready before the spin starts */
-function pickUpcoming(r){if(!r)return;const pool=poolChars(r);
-  if(!r.upcoming||!pool.includes(r.upcoming)||r.upcoming===r.char){const opts=pool.filter(c=>c!==r.char);r.upcoming=rnd(opts.length?opts:pool);}
-  prefetch(r.upcoming);}
+   every image lives in "img/" and is listed in IMG_MAP below with its exact path, so each one is a
+   single request: no guessing, no missing-file lookups. add a new image = add a line to the map. */
+const IMG_ROOT="img/";
+const IMG_MAP={"img":{"Dwight Fairfield":"base/Dwight Fairfield.webp","Meg Thomas":"base/Meg Thomas.webp","Claudette Morel":"base/Claudette Morel.webp","Jake Park":"base/Jake Park.webp","Nea Karlsson":"base/Nea Karlsson.webp","Bill Overbeck":"base/Bill Overbeck.webp","David King":"base/David King.webp","Laurie Strode":"all/Laurie Strode.webp","Ace Visconti":"all/Ace Visconti.webp","Feng Min":"all/Feng Min.webp","Quentin Smith":"all/Quentin Smith.webp","David Tapp":"all/David Tapp.webp","Kate Denson":"all/Kate Denson.webp","Adam Francis":"all/Adam Francis.webp","Jeff Johansen":"all/Jeff Johansen.webp","Jane Romero":"all/Jane Romero.webp","Ash Williams":"all/Ash Williams.webp","Nancy Wheeler":"all/Nancy Wheeler.webp","Steve Harrington":"all/Steve Harrington.webp","Yui Kimura":"all/Yui Kimura.webp","Zarina Kassir":"all/Zarina Kassir.webp","Cheryl Mason":"all/Cheryl Mason.webp","Felix Richter":"all/Felix Richter.webp","Élodie Rakoto":"all/Élodie Rakoto.webp","Lee Yun-jin":"all/Lee Yun-jin.webp","Jill Valentine":"all/Jill Valentine.webp","Leon Scott Kennedy":"all/Leon Scott Kennedy.webp","Mikaela Reid":"all/Mikaela Reid.webp","Jonah Vasquez":"all/Jonah Vasquez.webp","Yoichi Asakawa":"all/Yoichi Asakawa.webp","Haddie Kaur":"all/Haddie Kaur.webp","Ada Wong":"all/Ada Wong.webp","Rebecca Chambers":"all/Rebecca Chambers.webp","Vittorio Toscano":"all/Vittorio Toscano.webp","Thalita Lyra":"all/Thalita Lyra.webp","Renato Lyra":"all/Renato Lyra.webp","Gabriel Soma":"all/Gabriel Soma.webp","Nicolas Cage":"all/Nicolas Cage.webp","Ellen Ripley":"all/Ellen Ripley.webp","Alan Wake":"all/Alan Wake.webp","Sable Ward":"all/Sable Ward.webp","The Troupe":"all/The Troupe.webp","Lara Croft":"all/Lara Croft.webp","Trevor Belmont":"all/Trevor Belmont.webp","Taurie Cain":"all/Taurie Cain.webp","Orela Rose":"all/Orela Rose.webp","Rick Grimes":"all/Rick Grimes.webp","Michonne Grimes":"all/Michonne Grimes.webp","Vee Boonyasak":"all/Vee Boonyasak.webp","Dustin Henderson":"all/Dustin Henderson.webp","Eleven":"all/Eleven.webp","Kwon Tae-young":"all/Kwon Tae-young.webp","Shane Wiigwaas":"all/Shane Wiigwaas.webp","Aurora Stardotter":"all/Aurora Stardotter.webp","Dark Sense":"base/Dark Sense.webp","Déjà Vu":"base/Deja Vu.webp","Hope":"base/Hope.webp","Kindred":"base/Kindred.webp","Lightweight":"base/Lightweight.webp","No One Left Behind":"base/No One Left Behind.webp","Plunderer's Instinct":"base/Plunderer's Instinct.webp","Premonition":"base/Premonition.webp","Resilience":"base/Resilience.webp","Slippery Meat":"base/Slippery Meat.webp","Small Game":"base/Small Game.webp","Spine Chill":"base/Spine Chill.webp","This Is Not Happening":"base/This Is Not Happening.webp","We'll Make It":"base/We'll Make It.webp","Bond":"base/Bond.webp","Prove Thyself":"base/Prove Thyself.webp","Leader":"base/Leader.webp","Quick & Quiet":"base/Quick & Quiet.webp","Sprint Burst":"base/Sprint Burst.webp","Adrenaline":"base/Adrenaline.webp","Empathy":"base/Empathy.webp","Botany Knowledge":"base/Botany Knowledge.webp","Self-Care":"base/Self-Care.webp","Iron Will":"base/Iron Will.webp","Calm Spirit":"base/Calm Spirit.webp","Saboteur":"base/Saboteur.webp","Balanced Landing":"base/Balanced Landing.webp","Urban Evasion":"base/Urban Evasion.webp","Streetwise":"base/Streetwise.webp","Left Behind":"base/Left Behind.webp","Borrowed Time":"base/Borrowed Time.webp","Unbreakable":"base/Unbreakable.webp","We're Gonna Live Forever":"base/We're Gonna Live Forever.webp","Dead Hard":"base/Dead Hard.webp","No Mither":"base/No Mither.webp","Sole Survivor":"all/Sole Survivor.webp","Object of Obsession":"all/Object of Obsession.webp","Decisive Strike":"all/Decisive Strike.webp","Open-Handed":"all/Open-Handed.webp","Up the Ante":"all/Up the Ante.webp","Ace in the Hole":"all/Ace in the Hole.webp","Technician":"all/Technician.webp","Lithe":"all/Lithe.webp","Alert":"all/Alert.webp","Wake Up!":"all/Wake Up!.webp","Pharmacy":"all/Pharmacy.webp","Vigil":"all/Vigil.webp","Tenacity":"all/Tenacity.webp","Detective's Hunch":"all/Detective's Hunch.webp","Stake Out":"all/Stake Out.webp","Dance With Me":"all/Dance With Me.webp","Windows of Opportunity":"all/Windows of Opportunity.webp","Boil Over":"all/Boil Over.webp","Diversion":"all/Diversion.webp","Deliverance":"all/Deliverance.webp","Autodidact":"all/Autodidact.webp","Breakdown":"all/Breakdown.webp","Aftercare":"all/Aftercare.webp","Distortion":"all/Distortion.webp","Solidarity":"all/Solidarity.webp","Poised":"all/Poised.webp","Head On":"all/Head On.webp","Flip-Flop":"all/Flip-Flop.webp","Buckle Up":"all/Buckle Up.webp","Mettle of Man":"all/Mettle of Man.webp","Better Together":"all/Better Together.webp","Fixated":"all/Fixated.webp","Inner Strength":"all/Inner Strength.webp","Babysitter":"all/Babysitter.webp","Camaraderie":"all/Camaraderie.webp","Second Wind":"all/Second Wind.webp","Lucky Break":"all/Lucky Break.webp","Any Means Necessary":"all/Any Means Necessary.webp","Breakout":"all/Breakout.webp","Off the Record":"all/Off the Record.webp","Red Herring":"all/Red Herring.webp","For the People":"all/For the People.webp","Soul Guard":"all/Soul Guard.webp","Blood Pact":"all/Blood Pact.webp","Repressed Alliance":"all/Repressed Alliance.webp","Visionary":"all/Visionary.webp","Desperate Measures":"all/Desperate Measures.webp","Built to Last":"all/Built to Last.webp","Appraisal":"all/Appraisal.webp","Deception":"all/Deception.webp","Power Struggle":"all/Power Struggle.webp","Fast Track":"all/Fast Track.webp","Smash Hit":"all/Smash Hit.webp","Self-Preservation":"all/Self-Preservation.webp","Counterforce":"all/Counterforce.webp","Resurgence":"all/Resurgence.webp","Blast Mine":"all/Blast Mine.webp","Bite the Bullet":"all/Bite the Bullet.webp","Flashbang":"all/Flashbang.webp","Rookie Spirit":"all/Rookie Spirit.webp","Clairvoyance":"all/Clairvoyance.webp","Boon: Circle of Healing":"all/Boon Circle of Healing.webp","Boon: Shadow Step":"all/Boon Shadow Step.webp","Overcome":"all/Overcome.webp","Corrective Action":"all/Corrective Action.webp","Boon: Exponential":"all/Boon Exponential.webp","Parental Guidance":"all/Parental Guidance.webp","Empathic Connection":"all/Empathic Connection.webp","Boon: Dark Theory":"all/Boon Dark Theory.webp","Inner Focus":"all/Inner Focus.webp","Residual Manifest":"all/Residual Manifest.webp","Overzealous":"all/Overzealous.webp","Wiretap":"all/Wiretap.webp","Reactive Healing":"all/Reactive Healing.webp","Low Profile":"all/Low Profile.webp","Better than New":"all/Better than New.webp","Reassurance":"all/Reassurance.webp","Hyperfocus":"all/Hyperfocus.webp","Potential Energy":"all/Potential Energy.webp","Fogwise":"all/Fogwise.webp","Quick Gambit":"all/Quick Gambit.webp","Friendly Competition":"all/Friendly Competition.webp","Teamwork: Power of Two":"all/Teamwork Power of Two.webp","Cut Loose":"all/Cut Loose.webp","Blood Rush":"all/Blood Rush.webp","Teamwork: Collective Stealth":"all/Teamwork Collective Stealth.webp","Background Player":"all/Background Player.webp","Troubleshooter":"all/Troubleshooter.webp","Made for This":"all/Made for This.webp","Scavenger":"all/Scavenger.webp","Dramaturgy":"all/Dramaturgy.webp","Scene Partner":"all/Scene Partner.webp","Plot Twist":"all/Plot Twist.webp","Chemical Trap":"all/Chemical Trap.webp","Light-Footed":"all/Light-Footed.webp","Lucky Star":"all/Lucky Star.webp","Champion of Light":"all/Champion of Light.webp","Boon: Illumination":"all/Boon Illumination.webp","Deadline":"all/Deadline.webp","Invocation: Weaving Spiders":"all/Invocation Weaving Spiders.webp","Strength in Shadows":"all/Strength in Shadows.webp","Wicked":"all/Wicked.webp","Mirrored Illusion":"all/Mirrored Illusion.webp","Bardic Inspiration":"all/Bardic Inspiration.webp","Still Sight":"all/Still Sight.webp","Finesse":"all/Finesse.webp","Hardened":"all/Hardened.webp","Specialist":"all/Specialist.webp","Exultation":"all/Exultation.webp","Moment of Glory":"all/Moment of Glory.webp","Eyes of Belmont":"all/Eyes of Belmont.webp","Invocation: Treacherous Crows":"all/Invocation Treacherous Crows.webp","Clean Break":"all/Clean Break.webp","Shoulder the Burden":"all/Shoulder the Burden.webp","Do No Harm":"all/Do No Harm.webp","Duty of Care":"all/Duty of Care.webp","Rapid Response":"all/Rapid Response.webp","Apocalyptic Ingenuity":"all/Apocalyptic Ingenuity.webp","Come and Get Me!":"all/Come and Get Me!.webp","Teamwork: Toughen Up":"all/Teamwork Toughen Up.webp","Conviction":"all/Conviction.webp","Last Stand":"all/Last Stand.webp","Teamwork: Throw Down":"all/Teamwork Throw Down.webp","Road Life":"all/Road Life.webp","One-Two-Three-Four!":"all/One-Two-Three-Four!.webp","Ghost Notes":"all/Ghost Notes.webp","Bada Bada Boom":"all/Bada Bada Boom.webp","Change of Plan":"all/Change of Plan.webp","Teamwork: Full Circuit":"all/Teamwork Full Circuit.webp","Extrasensory Perception":"all/Extrasensory Perception.webp","We See You":"all/We See You.webp","Teamwork: Soft-Spoken":"all/Teamwork Soft-Spoken.webp","Flow State":"all/Flow State.webp","A Place For Us":"all/A Place For Us.webp","Five Moves Ahead":"all/Five Moves Ahead.webp","Wide Open Throttle":"all/Wide Open Throttle.webp","Lend a Hand":"all/Lend a Hand.webp","Cross-Examination":"all/Cross-Examination.webp","Fruits of Your Labor":"all/Fruits of Your Labor.webp","Salvation's Cry":"all/Salvation's Cry.webp","Boon: Steadfast":"all/Boon Steadfast.webp","The Trapper":"base/The Trapper.webp","The Wraith":"base/The Wraith.webp","The Hillbilly":"base/The Hillbilly.webp","The Nurse":"base/The Nurse.webp","The Huntress":"base/The Huntress.webp","The Shape":"all/The Shape.webp","The Hag":"all/The Hag.webp","The Doctor":"all/The Doctor.webp","The Cannibal":"all/The Cannibal.webp","The Nightmare":"all/The Nightmare.webp","The Pig":"all/The Pig.webp","The Clown":"all/The Clown.webp","The Spirit":"all/The Spirit.webp","The Legion":"all/The Legion.webp","The Plague":"all/The Plague.webp","The Ghost Face":"all/The Ghost Face.webp","The Demogorgon":"all/The Demogorgon.webp","The Oni":"all/The Oni.webp","The Deathslinger":"all/The Deathslinger.webp","The Executioner":"all/The Executioner.webp","The Blight":"all/The Blight.webp","The Twins":"all/The Twins.webp","The Trickster":"all/The Trickster.webp","The Nemesis":"all/The Nemesis.webp","The Cenobite":"all/The Cenobite.webp","The Artist":"all/The Artist.webp","The Onryō":"all/The Onryo.webp","The Dredge":"all/The Dredge.webp","The Mastermind":"all/The Mastermind.webp","The Knight":"all/The Knight.webp","The Skull Merchant":"all/The Skull Merchant.webp","The Singularity":"all/The Singularity.webp","The Xenomorph":"all/The Xenomorph.webp","The Good Guy":"all/The Good Guy.webp","The Unknown":"all/The Unknown.webp","The Lich":"all/The Lich.webp","The Dark Lord":"all/The Dark Lord.webp","The Houndmaster":"all/The Houndmaster.webp","The Ghoul":"all/The Ghoul.webp","The Animatronic":"all/The Animatronic.webp","The Krasue":"all/The Krasue.webp","The First":"all/The First.webp","The Slasher":"all/The Slasher.webp","The Judgment":"all/The Judgment.webp","Bitter Murmur":"base/Bitter Murmur.webp","Deerstalker":"base/Deerstalker.webp","Distressing":"base/Distressing.webp","Hex: No One Escapes Death":"base/Hex No One Escapes Death.webp","Hex: Thrill of the Hunt":"base/Hex Thrill of the Hunt.webp","Insidious":"base/Insidious.webp","Iron Grasp":"base/Iron Grasp.webp","Scourge Hook: Monstrous Shrine":"base/Scourge Hook Monstrous Shrine.webp","Sloppy Butcher":"base/Sloppy Butcher.webp","Spies from the Shadows":"base/Spies from the Shadows.webp","Unrelenting":"base/Unrelenting.webp","Whispers":"base/Whispers.webp","Hex: Fortune's Fool":"base/Hex Fortune's Fool.webp","No Holds Barred":"base/No Holds Barred.webp","Scourge Hook: Weeping Wounds":"base/Scourge Hook Weeping Wounds.webp","Shattered Hope":"base/Shattered Hope.webp","Cull the Weak":"base/Cull the Weak.webp","See How They Run":"base/See How They Run.webp","Unnerving Presence":"base/Unnerving Presence.webp","Brutal Strength":"base/Brutal Strength.webp","Agitation":"base/Agitation.webp","Predator":"base/Predator.webp","Bloodhound":"base/Bloodhound.webp","Shadowborn":"base/Shadowborn.webp","Enduring":"base/Enduring.webp","Lightborn":"base/Lightborn.webp","Tinkerer":"base/Tinkerer.webp","Stridor":"base/Stridor.webp","Thanatophobia":"base/Thanatophobia.webp","A Nurse's Calling":"base/A Nurse's Calling.webp","Beast of Prey":"base/Beast of Prey.webp","Hex: Huntress Lullaby":"base/Hex Huntress Lullaby.webp","Territorial Imperative":"base/Territorial Imperative.webp","Alien Instinct":"all/Alien Instinct.webp","All-Shaking Thunder":"all/All-Shaking Thunder.webp","Awakened Awareness":"all/Awakened Awareness.webp","Bamboozle":"all/Bamboozle.webp","Barbecue & Chilli":"all/Barbecue & Chilli.webp","Batteries Included":"all/Batteries Included.webp","Blood Echo":"all/Blood Echo.webp","Blood Warden":"all/Blood Warden.webp","Call of Brine":"all/Call of Brine.webp","Celestial Witness":"all/Celestial Witness.webp","Corrupt Intervention":"all/Corrupt Intervention.webp","Coulrophobia":"all/Coulrophobia.webp","Coup de Grâce":"all/Coup de Grâce.webp","Cruel Limits":"all/Cruel Limits.webp","Dark Arrogance":"all/Dark Arrogance.webp","Dark Devotion":"all/Dark Devotion.webp","Darkness Revealed":"all/Darkness Revealed.webp","Dead Man's Switch":"all/Dead Man's Switch.webp","Deathbound":"all/Deathbound.webp","Discordance":"all/Discordance.webp","Dissolution":"all/Dissolution.webp","Dominance":"all/Dominance.webp","Dragon's Grip":"all/Dragon's Grip.webp","Eruption":"all/Eruption.webp","Fire Up":"all/Fire Up.webp","Forced Hesitation":"all/Forced Hesitation.webp","Forced Penance":"all/Forced Penance.webp","Forever Entwined":"all/Forever Entwined.webp","Franklin's Demise":"all/Franklin's Demise.webp","Friends 'til the End":"all/Friends 'til the End.webp","Furtive Chase":"all/Furtive Chase.webp","Game Afoot":"all/Game Afoot.webp","Gearhead":"all/Gearhead.webp","Genetic Limits":"all/Genetic Limits.webp","Grim Embrace":"all/Grim Embrace.webp","Haywire":"all/Haywire.webp","Help Wanted":"all/Help Wanted.webp","Hex: Blood Favour":"all/Hex Blood Favour.webp","Hex: Crowd Control":"all/Hex Crowd Control.webp","Hex: Devour Hope":"all/Hex Devour Hope.webp","Hex: Face the Darkness":"all/Hex Face the Darkness.webp","Hex: Haunted Ground":"all/Hex Haunted Ground.webp","Hex: Hive Mind":"all/Hex Hive Mind.webp","Hex: Nothing but Misery":"all/Hex Nothing but Misery.webp","Hex: Overture of Doom":"all/Hex Overture of Doom.webp","Hex: Pentimento":"all/Hex Pentimento.webp","Hex: Retribution":"all/Hex Retribution.webp","Hex: Ruin":"all/Hex Ruin.webp","Hex: The Third Seal":"all/Hex The Third Seal.webp","Hex: Two Can Play":"all/Hex Two Can Play.webp","Hex: Under Your Thumb":"all/Hex Under Your Thumb.webp","Hex: Undying":"all/Hex Undying.webp","Hex: Wretched Fate":"all/Hex Wretched Fate.webp","Hoarder":"all/Hoarder.webp","Hubris":"all/Hubris.webp","Human Greed":"all/Human Greed.webp","Hysteria":"all/Hysteria.webp","I'm All Ears":"all/I'm All Ears.webp","Infectious Fright":"all/Infectious Fright.webp","Iron Maiden":"all/Iron Maiden.webp","Keep Them Waiting":"all/Keep Them Waiting.webp","Knock Out":"all/Knock Out.webp","Languid Touch":"all/Languid Touch.webp","Lay Waste":"all/Lay Waste.webp","Lethal Pursuer":"all/Lethal Pursuer.webp","Leverage":"all/Leverage.webp","Machine Learning":"all/Machine Learning.webp","Mad Grit":"all/Mad Grit.webp","Make Your Choice":"all/Make Your Choice.webp","Merciless Storm":"all/Merciless Storm.webp","Mindbreaker":"all/Mindbreaker.webp","Monitor & Abuse":"all/Monitor & Abuse.webp","Nemesis":"all/Nemesis.webp","No Quarter":"all/No Quarter.webp","No Way Out":"all/No Way Out.webp","None Are Free":"all/None Are Free.webp","Nowhere to Hide":"all/Nowhere to Hide.webp","Oppression":"all/Oppression.webp","Overcharge":"all/Overcharge.webp","Overwhelming Presence":"all/Overwhelming Presence.webp","Phantom Fear":"all/Phantom Fear.webp","Pop Goes the Weasel":"all/Pop Goes the Weasel.webp","Rancor":"all/Rancor.webp","Rapid Brutality":"all/Rapid Brutality.webp","Ravenous":"all/Ravenous.webp","Remember Me":"all/Remember Me.webp","Scourge Hook: Floods of Rage":"all/Scourge Hook Floods of Rage.webp","Scourge Hook: Hangman's Trick":"all/Scourge Hook Hangman's Trick.webp","Scourge Hook: Jagged Compass":"all/Scourge Hook Jagged Compass.webp","Scourge Hook: Pain Resonance":"all/Scourge Hook Pain Resonance.webp","Septic Touch":"all/Septic Touch.webp","Spirit Fury":"all/Spirit Fury.webp","Starstruck":"all/Starstruck.webp","Superior Anatomy":"all/Superior Anatomy.webp","Surge":"all/Surge.webp","Surveillance":"all/Surveillance.webp","Terminus":"all/Terminus.webp","Thrilling Tremors":"all/Thrilling Tremors.webp","THWACK!":"all/THWACK!.webp","Trail of Torment":"all/Trail of Torment.webp","Ultimate Weapon":"all/Ultimate Weapon.webp","Unbound":"all/Unbound.webp","Undone":"all/Undone.webp","Unforeseen":"all/Unforeseen.webp","Wandering Eye":"all/Wandering Eye.webp","Weave Attunement":"all/Weave Attunement.webp","Zanshin Tactics":"all/Zanshin Tactics.webp","Save the Best for Last":"all/Save the Best for Last.webp","Play with Your Food":"all/Play with Your Food.webp","Dying Light":"all/Dying Light.webp","Deadlock":"all/Deadlock.webp","Hex: Plaything":"all/Hex Plaything.webp","Scourge Hook: Gift of Pain":"all/Scourge Hook Gift of Pain.webp","Hex: Scared to Death":"all/Hex Scared to Death.webp","Silent Shadow":"all/Silent Shadow.webp","Rampage":"all/Rampage.webp","Turn Back the Clock":"all/Turn Back the Clock.webp"},"asc":{"survivor":{"Dwight Fairfield":"ascii/survivor/Dwight Fairfield.webp","Meg Thomas":"ascii/survivor/Meg Thomas.webp","Claudette Morel":"ascii/survivor/Claudette Morel.webp","Jake Park":"ascii/survivor/Jake Park.webp","Nea Karlsson":"ascii/survivor/Nea Karlsson.webp","Laurie Strode":"ascii/survivor/Laurie Strode.webp","Ace Visconti":"ascii/survivor/Ace Visconti.webp","Bill Overbeck":"ascii/survivor/Bill Overbeck.webp","Feng Min":"ascii/survivor/Feng Min.webp","David King":"ascii/survivor/David King.webp","Quentin Smith":"ascii/survivor/Quentin Smith.webp","David Tapp":"ascii/survivor/David Tapp.webp","Kate Denson":"ascii/survivor/Kate Denson.webp","Adam Francis":"ascii/survivor/Adam Francis.webp","Jeff Johansen":"ascii/survivor/Jeff Johansen.webp","Jane Romero":"ascii/survivor/Jane Romero.webp","Ash Williams":"ascii/survivor/Ash Williams.webp","Nancy Wheeler":"ascii/survivor/Nancy Wheeler.webp","Steve Harrington":"ascii/survivor/Steve Harrington.webp","Yui Kimura":"ascii/survivor/Yui Kimura.webp","Zarina Kassir":"ascii/survivor/Zarina Kassir.webp","Cheryl Mason":"ascii/survivor/Cheryl Mason.webp","Felix Richter":"ascii/survivor/Felix Richter.webp","Élodie Rakoto":"ascii/survivor/Élodie Rakoto.webp","Lee Yun-jin":"ascii/survivor/Lee Yun-jin.webp","Jill Valentine":"ascii/survivor/Jill Valentine.webp","Leon Scott Kennedy":"ascii/survivor/Leon Scott Kennedy.webp","Mikaela Reid":"ascii/survivor/Mikaela Reid.webp","Jonah Vasquez":"ascii/survivor/Jonah Vasquez.webp","Yoichi Asakawa":"ascii/survivor/Yoichi Asakawa.webp","Haddie Kaur":"ascii/survivor/Haddie Kaur.webp","Ada Wong":"ascii/survivor/Ada Wong.webp","Rebecca Chambers":"ascii/survivor/Rebecca Chambers.webp","Vittorio Toscano":"ascii/survivor/Vittorio Toscano.webp","Thalita Lyra":"ascii/survivor/Thalita Lyra.webp","Renato Lyra":"ascii/survivor/Renato Lyra.webp","Gabriel Soma":"ascii/survivor/Gabriel Soma.webp","Nicolas Cage":"ascii/survivor/Nicolas Cage.webp","Ellen Ripley":"ascii/survivor/Ellen Ripley.webp","Alan Wake":"ascii/survivor/Alan Wake.webp","Sable Ward":"ascii/survivor/Sable Ward.webp","The Troupe":"ascii/survivor/The Troupe.webp","Lara Croft":"ascii/survivor/Lara Croft.webp","Trevor Belmont":"ascii/survivor/Trevor Belmont.webp","Taurie Cain":"ascii/survivor/Taurie Cain.webp","Orela Rose":"ascii/survivor/Orela Rose.webp","Rick Grimes":"ascii/survivor/Rick Grimes.webp","Michonne Grimes":"ascii/survivor/Michonne Grimes.webp","Vee Boonyasak":"ascii/survivor/Vee Boonyasak.webp","Dustin Henderson":"ascii/survivor/Dustin Henderson.webp","Eleven":"ascii/survivor/Eleven.webp","Kwon Tae-young":"ascii/survivor/Kwon Tae-young.webp","Shane Wiigwaas":"ascii/survivor/Shane Wiigwaas.webp","Aurora Stardotter":"ascii/survivor/Aurora Stardotter.webp"},"killer":{"The Trapper":"ascii/killer/The Trapper.webp","The Wraith":"ascii/killer/The Wraith.webp","The Hillbilly":"ascii/killer/The Hillbilly.webp","The Nurse":"ascii/killer/The Nurse.webp","The Shape":"ascii/killer/The Shape.webp","The Hag":"ascii/killer/The Hag.webp","The Doctor":"ascii/killer/The Doctor.webp","The Huntress":"ascii/killer/The Huntress.webp","The Cannibal":"ascii/killer/The Cannibal.webp","The Nightmare":"ascii/killer/The Nightmare.webp","The Pig":"ascii/killer/The Pig.webp","The Clown":"ascii/killer/The Clown.webp","The Spirit":"ascii/killer/The Spirit.webp","The Legion":"ascii/killer/The Legion.webp","The Plague":"ascii/killer/The Plague.webp","The Ghost Face":"ascii/killer/The Ghost Face.webp","The Demogorgon":"ascii/killer/The Demogorgon.webp","The Oni":"ascii/killer/The Oni.webp","The Deathslinger":"ascii/killer/The Deathslinger.webp","The Executioner":"ascii/killer/The Executioner.webp","The Blight":"ascii/killer/The Blight.webp","The Twins":"ascii/killer/The Twins.webp","The Trickster":"ascii/killer/The Trickster.webp","The Nemesis":"ascii/killer/The Nemesis.webp","The Cenobite":"ascii/killer/The Cenobite.webp","The Artist":"ascii/killer/The Artist.webp","The Onryō":"ascii/killer/The Onryo.webp","The Dredge":"ascii/killer/The Dredge.webp","The Mastermind":"ascii/killer/The Mastermind.webp","The Knight":"ascii/killer/The Knight.webp","The Skull Merchant":"ascii/killer/The Skull Merchant.webp","The Singularity":"ascii/killer/The Singularity.webp","The Xenomorph":"ascii/killer/The Xenomorph.webp","The Good Guy":"ascii/killer/The Good Guy.webp","The Unknown":"ascii/killer/The Unknown.webp","The Lich":"ascii/killer/The Lich.webp","The Dark Lord":"ascii/killer/The Dark Lord.webp","The Houndmaster":"ascii/killer/The Houndmaster.webp","The Ghoul":"ascii/killer/The Ghoul.webp","The Animatronic":"ascii/killer/The Animatronic.webp","The Krasue":"ascii/killer/The Krasue.webp","The First":"ascii/killer/The First.webp","The Slasher":"ascii/killer/The Slasher.webp","The Judgment":"ascii/killer/The Judgment.webp"}},"icons":{"bone":"icons/bone.webp","favicon":"icons/favicon.png","killer":"icons/killer.webp","logo-dark":"icons/logo-dark.webp","logo":"icons/logo.webp","logomark":"icons/logomark.webp","rule-bones":"icons/rule-bones.webp","rule-bounties":"icons/rule-bounties.webp","rule-curse":"icons/rule-curse.webp","rule-loadout":"icons/rule-loadout.webp","survivor":"icons/survivor.webp"}};
+const IMG_CACHE={}, IMG_PENDING={};
+const imgURL=p=>IMG_ROOT+p.split("/").map(s=>encodeURIComponent(s).replace(/'/g,"%27")).join("/");
 const DEBUG_IMG=new URLSearchParams(location.search).has("debug");
 function dbg(msg,level){if(!DEBUG_IMG)return;(console[level]||console.log)(msg);
   let box=document.getElementById("dbgbox");if(!box){box=document.createElement("div");box.id="dbgbox";
     box.style.cssText="position:fixed;left:8px;right:8px;top:8px;max-height:40vh;overflow:auto;z-index:99999;background:rgba(0,0,0,.88);color:#F6F8EB;font:12px/1.4 ui-monospace,Menlo,monospace;padding:8px 10px;border-radius:8px;text-transform:none;pointer-events:auto";
     document.body.appendChild(box);}
   const l=document.createElement("div");l.textContent=msg;l.style.color=level==="error"?"#ff8a7a":level==="warn"?"#FABB07":"#9fe0b4";box.prepend(l);}
-function resolveImg(name){
-  if(!name||IMG_CACHE[name]!==undefined) return Promise.resolve(IMG_CACHE[name]||null);
-  if(IMG_PENDING[name]) return IMG_PENDING[name];
-  const list=imgNames(name);
-  return IMG_PENDING[name]=(async()=>{
-    const t0=performance.now();let tries=1;
-    if(await probe(list[0])){IMG_CACHE[name]=list[0];delete IMG_PENDING[name];dbg(`[img] ${name}: ${Math.round(performance.now()-t0)}ms, found first try`,'log');return list[0];}
-    for(let i=1;i<list.length;i+=8){const batch=list.slice(i,i+8),ok=await Promise.all(batch.map(probe));const k=ok.indexOf(true);
-      tries++;if(k>-1){IMG_CACHE[name]=batch[k];delete IMG_PENDING[name];dbg(`[img] ${name}: ${Math.round(performance.now()-t0)}ms after ${tries} rounds. expected ${decodeURIComponent(list[0])} but found ${decodeURIComponent(batch[k])}`,'warn');return batch[k];}}
-    IMG_CACHE[name]=false;delete IMG_PENDING[name];dbg(`[img] ${name}: NOT FOUND after ${Math.round(performance.now()-t0)}ms. expected ${decodeURIComponent(list[0])}`,'error');return null;})();
+/* load one file and wait until it's decoded, so it pops in fully drawn */
+function loadSrc(src){return new Promise(res=>{const im=new Image();im.decoding="async";
+  im.onload=()=>{(im.decode?im.decode().catch(()=>{}):Promise.resolve()).then(()=>res(true));};im.onerror=()=>res(false);im.src=src;});}
+function cachedLoad(key,path){
+  if(IMG_CACHE[key]!==undefined) return Promise.resolve(IMG_CACHE[key]||null);
+  if(IMG_PENDING[key]) return IMG_PENDING[key];
+  if(!path){IMG_CACHE[key]=false;return Promise.resolve(null);}
+  const src=imgURL(path),t0=performance.now();
+  return IMG_PENDING[key]=loadSrc(src).then(ok=>{IMG_CACHE[key]=ok?src:false;delete IMG_PENDING[key];
+    dbg(`[img] ${key}: ${ok?"":"FAILED "}${Math.round(performance.now()-t0)}ms`,ok?"log":"error");return ok?src:null;});
 }
-/* card art: images/ascii/survivor/ or images/ascii/killer/ (or plain images/ascii/), same filenames as the portraits.
-   falls back to the regular portrait when there's no dedicated ascii image. */
-const ASCII_CACHE={};
-function asciiNames(name,role){
-  const files=[...new Set(imgNames(name).map(u=>u.replace(/^images\/(base|all)\/|^images\//,"")))];
-  const out=[];[`images/ascii/${role}/`,"images/ascii/"].forEach(d=>files.forEach(f=>out.push(d+f)));return out;
-}
+const resolveImg=name=>name?cachedLoad(name,IMG_MAP.img[name]):Promise.resolve(null);
+/* card art: the dedicated ascii portrait, or the regular portrait if there isn't one */
 async function resolveAscii(name,role){
-  const key=role+"|"+name;if(ASCII_CACHE[key]!==undefined)return ASCII_CACHE[key]||null;
-  const list=asciiNames(name,role);
-  for(let i=0;i<list.length;i+=8){const batch=list.slice(i,i+8),ok=await Promise.all(batch.map(probe));const k=ok.indexOf(true);
-    if(k>-1){ASCII_CACHE[key]=batch[k];return batch[k];}}
-  ASCII_CACHE[key]=false;return null;
+  const p=IMG_MAP.asc[role]&&IMG_MAP.asc[role][name];
+  return (p&&await cachedLoad("ascii|"+role+"|"+name,p))||resolveImg(name);
 }
+/* the entity secretly picks your next character in advance, so the portrait is ready before the spin starts */
+function pickUpcoming(r){if(!r)return;const pool=poolChars(r);
+  if(!r.upcoming||!pool.includes(r.upcoming)||r.upcoming===r.char){const opts=pool.filter(c=>c!==r.char);r.upcoming=rnd(opts.length?opts:pool);}
+  prefetch(r.upcoming);}
+/* quiet background loading: once the page is showing, fetch the rest of your run's perks and characters
+   three at a time, so rolls land with their art already there. anything on screen jumps the queue. */
+const BGQ=[];let bgBusy=0;
+function bgLoad(list){if(IS_OVERLAY_PAGE)return;const sd=navigator.connection&&navigator.connection.saveData;if(sd)return;
+  list.forEach(n=>{if(n&&IMG_CACHE[n]===undefined)BGQ.push(n);});bgPump();}
+function bgPump(){while(bgBusy<3&&BGQ.length){const n=BGQ.shift();if(IMG_CACHE[n]!==undefined||IMG_PENDING[n])continue;
+  bgBusy++;const p=n.startsWith("ascii|")?(()=>{const[,role,nm]=n.split("|");return resolveAscii(nm,role);})():resolveImg(n);p.finally(()=>{bgBusy--;bgPump();});}}
+function warmPools(){["survivor","killer"].forEach(role=>{const r=S.runs[role];if(!r)return;
+  const mp=topOf(r.stats.char);if(mp)BGQ.unshift("ascii|"+role+"|"+mp.k);
+  bgLoad([...poolPerks(r),...poolChars(r)]);});}
 const prefetch=(...names)=>names.flat().forEach(n=>{if(n)resolveImg(n);});
 function imgTag(name){
   const c=IMG_CACHE[name];
@@ -782,29 +788,29 @@ function syncScheme(m){const el=document.getElementById("cs-meta");if(el)el.cont
 (function(){let m=null;try{m=localStorage.getItem("abtp:mode");}catch(e){}document.documentElement.dataset.mode=m==="night"?"night":"day";syncScheme(document.documentElement.dataset.mode);})();
 
 /* ---------- icons ----------
-   custom artwork lives in images/icons/ (png):
+   custom artwork lives in img/icons/ (listed in IMG_MAP.icons):
    logo, survivor, killer, bone, rule-loadout, rule-bounties, rule-bones, rule-curse
    (optional role-specific rule icons, e.g. killer-rule-curse, take priority). */
-const ICON_DIR="images/icons/", ICON_EXT=["png","svg","webp"], ICON_CACHE={};
-function iconList(names){const l=[];names.forEach(n=>ICON_EXT.forEach(e=>l.push(ICON_DIR+n+"."+e)));return l;}
+const ICON_CACHE={};
+function iconList(names){return names.map(n=>IMG_MAP.icons[n]).filter(Boolean).map(imgURL);}
 function iconImg(names,cls=""){const key=names.join("|"),c=ICON_CACHE[key];
   if(c===false) return "";
   if(c) return `<img class="${cls}" src="${c}" alt="">`;
-  const l=iconList(names);
+  const l=iconList(names);if(!l.length){ICON_CACHE[key]=false;return "";}
   return `<img class="${cls}" src="${l[0]}" alt="" data-icon="${key}" data-i="0" onload="ICON_CACHE[this.dataset.icon]=this.getAttribute('src')" onerror="iconNext(this)">`;}
 function iconNext(el){const key=el.dataset.icon,l=iconList(key.split("|")),i=+el.dataset.i+1;
   if(i<l.length){el.dataset.i=i;el.src=l[i];}else{ICON_CACHE[key]=false;el.remove();}}
 
 /* ---------- logo ----------
-   save your title artwork as images/icons/logo.svg (or .png / .webp). if none is found, the text title shows instead. */
+   title artwork is img/icons/logo.webp (logo-dark.webp at night). if it is missing, the text title shows instead. */
 let LOGO=null, CARD_MARK=null;
 function loadLogo(){const img=document.getElementById("logo"),txt=document.getElementById("wmtext");
   const list=iconList(isNight()?["logo-dark","logo"]:["logo"]);let i=0;
   img.onload=()=>{img.hidden=false;LOGO=img;if(txt)txt.hidden=true;};
   img.onerror=()=>{i++;if(i<list.length)img.src=list[i];else{img.hidden=true;LOGO=null;if(txt)txt.hidden=false;}};
-  img.src=list[0];}
+  if(list.length)img.src=list[0];else img.onerror();}
 (function loadCardMark(){const list=iconList(["logomark"]);let i=0;const im=new Image();
-  im.onload=()=>{CARD_MARK=im;};im.onerror=()=>{i++;if(i<list.length)im.src=list[i];};im.src=list[0];})();
+  im.onload=()=>{CARD_MARK=im;};im.onerror=()=>{i++;if(i<list.length)im.src=list[i];};if(list.length)im.src=list[0];})();
 
 loadLogo();
 function setMode(m){const h=document.documentElement;syncScheme(m);if(!reduced){h.classList.add("theming");setTimeout(()=>h.classList.remove("theming"),500);}
@@ -836,20 +842,46 @@ const DATA={
    {id:"nohook",n:"escape without being hooked",b:2},
    {id:"trade",n:"take a hit or hook for someone in end game",b:3},
    {id:"key",n:"open the hatch with a key",b:3,need:2},
-   {id:"sabotage",n:"sabotage a hook (bring a toolbox)",b:2},
+   {id:"sabotage",n:"sabotage a hook",b:2},
    {id:"chests",n:"search three chests",b:1},
-   {id:"twice",n:"escape after being hooked twice",b:3}],
+   {id:"twice",n:"escape after being hooked twice",b:3},
+   {id:"gate",n:"open the exit gate",b:1},
+   {id:"grasp",n:"help a survivor escape the killer's grasp",b:3},
+   {id:"lose",n:"escape a chase",b:1},
+   {id:"genpop",n:"one gen pop during your chase",b:2},
+   {id:"totem",n:"cleanse one totem",b:1},
+   {id:"twogens",n:"pop two gens",b:2},
+   {id:"slap",n:"slap the killer's butt without being hit",b:2},
+   {id:"totems5",n:"cleanse five totems",b:4},
+   {id:"twogenpop",n:"two gens pop during your chase",b:3},
+   {id:"gift",n:"give another survivor your unused item",b:2,need:0},
+   {id:"miss",n:"make the killer swing and miss",b:1},
+   {id:"prot",n:"take a protection hit for a survivor",b:1},
+   {id:"egunhook",n:"unhook a survivor during end game",b:2},
+   {id:"getslap",n:"get a survivor to slap your butt",b:1},
+   {id:"swap",n:"trade items with a survivor",b:2,need:0},
+   {id:"nohit",n:"escape without getting hit",b:3}],
   curses:[
-   {n:"noodle legs",d:"you can't vault windows."},
-   {n:"stage fright",d:"hide in a locker the first time you hear the terror radius."},
-   {n:"tour guide",d:"point at every generator you pass."},
-   {n:"empty pockets",d:"bring no item."},
-   {n:"procrastinator",d:"you can't start a generator until another one is completed."},
-   {n:"pallet shy",d:"you can't drop a pallet during your first chase."},
-   {n:"clingy",d:"you can't work on a generator alone."},
-   {n:"hide and seek",d:"spend your first 60 seconds in a locker."},
-   {n:"dizzy",d:"spin in a full circle before every vault."},
-   {n:"scrambled",d:"the entity rerolls your whole loadout. lift the curse to keep your build.",instant:true}]
+   {n:"noodle legs",d:"you can't vault windows"},
+   {n:"stage fright",d:"hide in a locker the first time you hear the terror radius"},
+   {n:"tour guide",d:"point at every generator you pass"},
+   {n:"empty pockets",d:"bring no items"},
+   {n:"procrastinator",d:"you can't start a generator until another gen is completed"},
+   {n:"pallet shy",d:"you can't drop a pallet during your first chase"},
+   {n:"clingy",d:"you can't work on a generator alone"},
+   {n:"hide and seek",d:"spend your first 60 seconds in a locker"},
+   {n:"dizzy",d:"spin in a full circle before every vault"},
+   {n:"bad locksmith",d:"you can't unlock any chests"},
+   {n:"wasteful",d:"you can't use any items"},
+   {n:"stroller",d:"walk the first 60 seconds of the match"},
+   {n:"keep calm",d:"you can only walk during the end game collapse"},
+   {n:"greedy",d:"you can't drop any pallets"},
+   {n:"getting old",d:"you can't vault any windows or pallets"},
+   {n:"squatter",d:"tea bag after you drop a pallet"},
+   {n:"bad technician",d:"you can't finish the last gen"},
+   {n:"bad neck",d:"you can't look behind you"},
+   {n:"home sweet home",d:"you can't open the exit gate"},
+   {n:"scrambled",d:"the entity rerolls your whole loadout. lift the curse to keep your build",instant:true}]
  },
  killer:{
   chars:["The Trapper","The Wraith","The Hillbilly","The Nurse","The Huntress"],
@@ -857,33 +889,61 @@ const DATA={
    "Unnerving Presence","Brutal Strength","Agitation","Predator","Bloodhound","Shadowborn","Enduring","Lightborn","Tinkerer","Stridor","Thanatophobia","A Nurse's Calling","Beast of Prey","Hex: Huntress Lullaby","Territorial Imperative"],
   bounties:[
    {id:"basement",n:"hook a survivor in the basement",b:1},
-   {id:"shack",n:"get the shack or god pallet thrown before 2 gens pop",b:1},
+   {id:"shack",n:"shack or god pallet thrown before two gens pop",b:1},
    {id:"grab",n:"grab a survivor from a window or generator",b:2},
    {id:"close",n:"close the hatch",b:2},
-   {id:"mercy",n:"let the last survivor go at the hatch",b:2},
-   {id:"4k",n:"get a 4k",b:3},
-   {id:"unhookhit",n:"hit a survivor while they're unhooking someone",b:1},
+   {id:"mercy",n:"let the last survivor escape through hatch",b:2},
+   {id:"4k",n:"get four kills",b:3},
+   {id:"unhookhit",n:"hit a survivor whilst they're unhooking someone",b:1},
    {id:"nogens",n:"end the match with no generators completed",b:3},
-   {id:"kicks",n:"kick five generators",b:1}],
+   {id:"kicks",n:"kick five generators",b:1},
+   {id:"mori",n:"mori a survivor",b:2},
+   {id:"egchook",n:"hook a survivor during the end game collapse",b:2},
+   {id:"earlyhook",n:"hook a survivor before a gen pops",b:2},
+   {id:"locker",n:"find a survivor in a locker",b:2},
+   {id:"base2",n:"hook two survivors in basement",b:2},
+   {id:"base2same",n:"hook two survivors in basement at the same time",b:2},
+   {id:"three",n:"hook three survivors at the same time",b:3},
+   {id:"4klast",n:"get a 4k when there is one gen left",b:4},
+   {id:"twelve",n:"get twelve hooks",b:4},
+   {id:"shackmori",n:"mori a survivor in the shack",b:3},
+   {id:"pallets5",n:"break five pallets",b:1},
+   {id:"wall",n:"break a breakable wall",b:1},
+   {id:"everyone",n:"hook every survivor at least once",b:1},
+   {id:"fall",n:"fall from a great height whilst carrying a survivor",b:3},
+   {id:"nostun",n:"avoid getting pallet stunned",b:2},
+   {id:"threegen",n:"force a three gen",b:3}],
   curses:[
-   {n:"picky eater",d:"you can't kick generators."},
-   {n:"short memory",d:"you can't hook the same survivor twice in a row."},
-   {n:"polite",d:"nod at every survivor you down before picking them up."},
-   {n:"bare hands",d:"bring no add-ons."},
-   {n:"social butterfly",d:"hook every survivor once before hooking anyone a second time."},
-   {n:"pallet respecter",d:"you can't break pallets. walk around them."},
-   {n:"basement dweller",d:"your first hook must be in the basement."},
-   {n:"hands off",d:"you can't kick breakable walls."},
-   {n:"chivalry",d:"let the first survivor you find go free."},
-   {n:"scrambled",d:"the entity rerolls your whole loadout. lift the curse to keep your build.",instant:true}]
+   {n:"picky eater",d:"you can't kick any generators"},
+   {n:"short memory",d:"you can't hook the same survivor twice in a row"},
+   {n:"polite",d:"nod at every survivor you down before picking them up"},
+   {n:"bare hands",d:"bring no add-ons"},
+   {n:"social butterfly",d:"hook every survivor once before hooking anyone a second time"},
+   {n:"pallet respecter",d:"you can't break pallets. walk around them"},
+   {n:"basement dweller",d:"your first hook must be in the basement"},
+   {n:"hands off",d:"you can't kick breakable walls"},
+   {n:"chivalry",d:"let the first survivor you find go free"},
+   {n:"ballerina",d:"one full spin after you hook a survivor"},
+   {n:"love taps",d:"hit every survivor on hook one time"},
+   {n:"no peeping",d:"open a locker after you kick a gen"},
+   {n:"merciful",d:"you can't hook the first survivor you down"},
+   {n:"warm up",d:"complete one lap of the map before your first chase"},
+   {n:"knock knock",d:"headbutt breakable walls before breaking them"},
+   {n:"m1'er",d:"don't use your power or m2 ability"},
+   {n:"showtime",d:"one full spin before you pick up a survivor"},
+   {n:"deep thinker",d:"after you hook a survivor stare at a wall for 5 seconds"},
+   {n:"moonwalker",d:"only walk backwards whilst carrying a survivor to hook"},
+   {n:"scrambled",d:"the entity rerolls your whole loadout. lift the curse to keep your build",instant:true}]
  }
 };
-const RAR=[{n:"common",c:"#80523B"},{n:"uncommon",c:"#FABB07"},{n:"rare",c:"#007742"},{n:"very rare",c:"#494A86"},{n:"ultra rare",c:"#D24026"}];
-const RARW=["brown","yellow","green","purple","pink"];
+const RAR=[{n:"common",c:"#80523B"},{n:"uncommon",c:"#007742"},{n:"rare",c:"#2F6DB5"},{n:"very rare",c:"#494A86"},{n:"iridescent",c:"#D24026"}];
+const RARW=["brown","green","blue","purple","iridescent"];
+/* items top out at purple; add-ons go up to iridescent */
+const RMAX={items:3,addons:4};
 /* max rarity index per tier (ash..iri); -1 means not allowed */
 const KIT={survivor:{items:[0,1,2,2,3],addons:[-1,0,1,2,3]},killer:{addons:[-1,0,1,2,3]}};
 function allowance(r,forTier){const t=forTier!=null?forTier:Math.floor(r.grade/4),k=KIT[r.role],b=(r.contraband&&forTier==null)?1:0;
-  return {items:k.items?Math.min(3,k.items[t]+b):null,addons:Math.min(3,k.addons[t]+b)};}
+  return {items:k.items?Math.min(RMAX.items,k.items[t]+b):null,addons:Math.min(RMAX.addons,k.addons[t]+b)};}
 /* full roster ("access all") from the official dead by daylight wiki, sept 2026 */
 const ALL={"survivor": {"chars": ["Dwight Fairfield", "Meg Thomas", "Claudette Morel", "Jake Park", "Nea Karlsson", "Laurie Strode", "Ace Visconti", "Bill Overbeck", "Feng Min", "David King", "Quentin Smith", "David Tapp", "Kate Denson", "Adam Francis", "Jeff Johansen", "Jane Romero", "Ash Williams", "Nancy Wheeler", "Steve Harrington", "Yui Kimura", "Zarina Kassir", "Cheryl Mason", "Felix Richter", "Élodie Rakoto", "Lee Yun-jin", "Jill Valentine", "Leon Scott Kennedy", "Mikaela Reid", "Jonah Vasquez", "Yoichi Asakawa", "Haddie Kaur", "Ada Wong", "Rebecca Chambers", "Vittorio Toscano", "Thalita Lyra", "Renato Lyra", "Gabriel Soma", "Nicolas Cage", "Ellen Ripley", "Alan Wake", "Sable Ward", "The Troupe", "Lara Croft", "Trevor Belmont", "Taurie Cain", "Orela Rose", "Rick Grimes", "Michonne Grimes", "Vee Boonyasak", "Dustin Henderson", "Eleven", "Kwon Tae-young", "Shane Wiigwaas", "Aurora Stardotter"], "perks": ["Dark Sense", "Déjà Vu", "Hope", "Kindred", "Lightweight", "No One Left Behind", "Plunderer's Instinct", "Premonition", "Resilience", "Slippery Meat", "Small Game", "Spine Chill", "This Is Not Happening", "We'll Make It", "Bond", "Prove Thyself", "Leader", "Quick & Quiet", "Sprint Burst", "Adrenaline", "Empathy", "Botany Knowledge", "Self-Care", "Iron Will", "Calm Spirit", "Saboteur", "Balanced Landing", "Urban Evasion", "Streetwise", "Sole Survivor", "Object of Obsession", "Decisive Strike", "Open-Handed", "Up the Ante", "Ace in the Hole", "Left Behind", "Borrowed Time", "Unbreakable", "Technician", "Lithe", "Alert", "We're Gonna Live Forever", "Dead Hard", "No Mither", "Wake Up!", "Pharmacy", "Vigil", "Tenacity", "Detective's Hunch", "Stake Out", "Dance With Me", "Windows of Opportunity", "Boil Over", "Diversion", "Deliverance", "Autodidact", "Breakdown", "Aftercare", "Distortion", "Solidarity", "Poised", "Head On", "Flip-Flop", "Buckle Up", "Mettle of Man", "Better Together", "Fixated", "Inner Strength", "Babysitter", "Camaraderie", "Second Wind", "Lucky Break", "Any Means Necessary", "Breakout", "Off the Record", "Red Herring", "For the People", "Soul Guard", "Blood Pact", "Repressed Alliance", "Visionary", "Desperate Measures", "Built to Last", "Appraisal", "Deception", "Power Struggle", "Fast Track", "Smash Hit", "Self-Preservation", "Counterforce", "Resurgence", "Blast Mine", "Bite the Bullet", "Flashbang", "Rookie Spirit", "Clairvoyance", "Boon: Circle of Healing", "Boon: Shadow Step", "Overcome", "Corrective Action", "Boon: Exponential", "Parental Guidance", "Empathic Connection", "Boon: Dark Theory", "Inner Focus", "Residual Manifest", "Overzealous", "Wiretap", "Reactive Healing", "Low Profile", "Better than New", "Reassurance", "Hyperfocus", "Potential Energy", "Fogwise", "Quick Gambit", "Friendly Competition", "Teamwork: Power of Two", "Cut Loose", "Blood Rush", "Teamwork: Collective Stealth", "Background Player", "Troubleshooter", "Made for This", "Scavenger", "Dramaturgy", "Scene Partner", "Plot Twist", "Chemical Trap", "Light-Footed", "Lucky Star", "Champion of Light", "Boon: Illumination", "Deadline", "Invocation: Weaving Spiders", "Strength in Shadows", "Wicked", "Mirrored Illusion", "Bardic Inspiration", "Still Sight", "Finesse", "Hardened", "Specialist", "Exultation", "Moment of Glory", "Eyes of Belmont", "Invocation: Treacherous Crows", "Clean Break", "Shoulder the Burden", "Do No Harm", "Duty of Care", "Rapid Response", "Apocalyptic Ingenuity", "Come and Get Me!", "Teamwork: Toughen Up", "Conviction", "Last Stand", "Teamwork: Throw Down", "Road Life", "One-Two-Three-Four!", "Ghost Notes", "Bada Bada Boom", "Change of Plan", "Teamwork: Full Circuit", "Extrasensory Perception", "We See You", "Teamwork: Soft-Spoken", "Flow State", "A Place For Us", "Five Moves Ahead", "Wide Open Throttle", "Lend a Hand", "Cross-Examination", "Fruits of Your Labor", "Salvation's Cry", "Boon: Steadfast"]}, "killer": {"chars": ["The Trapper", "The Wraith", "The Hillbilly", "The Nurse", "The Shape", "The Hag", "The Doctor", "The Huntress", "The Cannibal", "The Nightmare", "The Pig", "The Clown", "The Spirit", "The Legion", "The Plague", "The Ghost Face", "The Demogorgon", "The Oni", "The Deathslinger", "The Executioner", "The Blight", "The Twins", "The Trickster", "The Nemesis", "The Cenobite", "The Artist", "The Onryō", "The Dredge", "The Mastermind", "The Knight", "The Skull Merchant", "The Singularity", "The Xenomorph", "The Good Guy", "The Unknown", "The Lich", "The Dark Lord", "The Houndmaster", "The Ghoul", "The Animatronic", "The Krasue", "The First", "The Slasher", "The Judgment"], "perks": ["Bitter Murmur", "Deerstalker", "Distressing", "Hex: No One Escapes Death", "Hex: Thrill of the Hunt", "Insidious", "Iron Grasp", "Scourge Hook: Monstrous Shrine", "Sloppy Butcher", "Spies from the Shadows", "Unrelenting", "Whispers", "Hex: Fortune's Fool", "No Holds Barred", "Scourge Hook: Weeping Wounds", "Shattered Hope", "Cull the Weak", "See How They Run", "A Nurse's Calling", "Agitation", "Alien Instinct", "All-Shaking Thunder", "Awakened Awareness", "Bamboozle", "Barbecue & Chilli", "Batteries Included", "Beast of Prey", "Blood Echo", "Blood Warden", "Bloodhound", "Brutal Strength", "Call of Brine", "Celestial Witness", "Corrupt Intervention", "Coulrophobia", "Coup de Grâce", "Cruel Limits", "Dark Arrogance", "Dark Devotion", "Darkness Revealed", "Dead Man's Switch", "Deathbound", "Discordance", "Dissolution", "Dominance", "Dragon's Grip", "Enduring", "Eruption", "Fire Up", "Forced Hesitation", "Forced Penance", "Forever Entwined", "Franklin's Demise", "Friends 'til the End", "Furtive Chase", "Game Afoot", "Gearhead", "Genetic Limits", "Grim Embrace", "Haywire", "Help Wanted", "Hex: Blood Favour", "Hex: Crowd Control", "Hex: Devour Hope", "Hex: Face the Darkness", "Hex: Haunted Ground", "Hex: Hive Mind", "Hex: Huntress Lullaby", "Hex: Nothing but Misery", "Hex: Overture of Doom", "Hex: Pentimento", "Hex: Retribution", "Hex: Ruin", "Hex: The Third Seal", "Hex: Two Can Play", "Hex: Under Your Thumb", "Hex: Undying", "Hex: Wretched Fate", "Hoarder", "Hubris", "Human Greed", "Hysteria", "I'm All Ears", "Infectious Fright", "Iron Maiden", "Keep Them Waiting", "Knock Out", "Languid Touch", "Lay Waste", "Lethal Pursuer", "Leverage", "Lightborn", "Machine Learning", "Mad Grit", "Make Your Choice", "Merciless Storm", "Mindbreaker", "Monitor & Abuse", "Nemesis", "No Quarter", "No Way Out", "None Are Free", "Nowhere to Hide", "Oppression", "Overcharge", "Overwhelming Presence", "Phantom Fear", "Pop Goes the Weasel", "Predator", "Rancor", "Rapid Brutality", "Ravenous", "Remember Me", "Scourge Hook: Floods of Rage", "Scourge Hook: Hangman's Trick", "Scourge Hook: Jagged Compass", "Scourge Hook: Pain Resonance", "Septic Touch", "Shadowborn", "Spirit Fury", "Starstruck", "Stridor", "Superior Anatomy", "Surge", "Surveillance", "Terminus", "Territorial Imperative", "Thanatophobia", "Thrilling Tremors", "THWACK!", "Tinkerer", "Trail of Torment", "Ultimate Weapon", "Unbound", "Undone", "Unforeseen", "Unnerving Presence", "Wandering Eye", "Weave Attunement", "Zanshin Tactics", "Save the Best for Last", "Play with Your Food", "Dying Light", "Deadlock", "Hex: Plaything", "Scourge Hook: Gift of Pain", "Hex: Scared to Death", "Silent Shadow", "Rampage", "Turn Back the Clock"]}};
 const roster=r=>((r&&r.pool==="all")?ALL:DATA)[r?r.role:S.role];
@@ -906,7 +966,7 @@ const SHOP=[
  {id:"rekill",cost:1,what:"reroll your killer",how:"don't fancy this killer? reroll them at random. during a match.",role:"killer",inMatch:true},
  {id:"ban",cost:3,what:"ban a killer",how:"remove one killer from your rolls for the rest of the run.",role:"killer"}
 ];
-const BONE='<img class="bone-i" src="images/icons/bone.png" alt="" onerror="this.style.visibility=\'hidden\'">';
+const BONE='<img class="bone-i" src="img/icons/bone.webp" alt="" onerror="this.style.visibility=\'hidden\'">';
 
 /* ---------- season ---------- */
 /* the rank reset lands at 15:00 UTC on the 13th (4pm in the UK during summer time) */
@@ -921,7 +981,7 @@ function season(d=new Date()){
 /* ---------- storage ---------- */
 const KEY="abtp:v3"; let mem=null;
 function load(){try{const s=localStorage.getItem(KEY); if(s) return JSON.parse(s);}catch(e){} return mem;}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){mem=S;}pushOverlay();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){mem=S;}pushOverlay();if(typeof precard==="function")precard();}
 
 /* ---------- overlay relay ----------
    paste your cloudflare worker address between the quotes, e.g. "https://abtp-relay.yourname.workers.dev" */
@@ -1002,7 +1062,8 @@ function logMatch(res){
   r.bones+=gained; r.stats.earned+=gained; r.stats.matches++;
   const served=r.curse?r.curse.n:null; r.curse=null; const notes=[];
   if(gained) notes.push(`+${gained} bone${gained>1?"s":""}`);
-  if(res==="none"){const c=rnd(DATA[r.role].curses);r.curse=c;if(c.instant){r.needsRoll=true;r.scrambled=true;}r.stats.noPips++;r.stats.curses++;r.stats.curse[c.n]=(r.stats.curse[c.n]||0)+1;notes.push(`cursed: ${c.n}`);}
+  let lost=0;
+  if(res==="none"){lost=Math.min(1,r.bones);r.bones-=lost;r.stats.lost=(r.stats.lost||0)+lost;if(lost)notes.push("-1 bone");const c=rnd(DATA[r.role].curses);r.curse=c;if(c.instant){r.needsRoll=true;r.scrambled=true;}r.stats.noPips++;r.stats.curses++;r.stats.curse[c.n]=(r.stats.curse[c.n]||0)+1;notes.push(`cursed: ${c.n}`);}
   else{
     const add=res==="double"?2:1; r.stats.pips++; if(add===2) r.stats.doubles=(r.stats.doubles||0)+1;
     r.stats.pipsGained=(r.stats.pipsGained||0)+add;
@@ -1015,7 +1076,7 @@ function logMatch(res){
     else if(Math.floor(r.grade/4)>startTier){r.needsRoll=true;r.tierUp=true;r.bones++;r.stats.earned++;notes.push(`${TIERS[Math.floor(r.grade/4)].n} reached. +1 bone`);}
   }
   pickUpcoming(r);
-  r.log.unshift({n:r.stats.matches,t:Date.now(),res,grade:r.grade,pips:r.pips,up:r.grade>(JSON.parse(r.snaps[r.snaps.length-1]).grade),bones:gained,hit,served,curse:r.curse?r.curse.n:null,smuggled:!!r.contraband});
+  r.log.unshift({n:r.stats.matches,t:Date.now(),res,grade:r.grade,pips:r.pips,up:r.grade>(JSON.parse(r.snaps[r.snaps.length-1]).grade),bones:gained-lost,hit,served,curse:r.curse?r.curse.n:null,smuggled:!!r.contraband});
   r.contraband=false; r.inMatch=false; r.bounties=[];
   save(); render(); toast(notes.join(". ")||"match logged.");
   if(r.completedAt)goTo("top");else if(r.needsRoll)nudge("loadout");else nudge("match");
@@ -1117,7 +1178,7 @@ function openRules(){
   dialog(`${S.role} rules`,`
     <div class="dsec"><p>level up from ash iv to iridescent i before grades reset on the 13th. your perks and ${S.role}s come from the roster you choose, picked at random.</p>
     <p class="dim sm">roll a new loadout each time you reach a new rank, and pick up a bonus bone. every match draws ${PER_MATCH} bounties. finish a match without a pip and you're cursed for the next one.</p></div>
-    <div class="dsec"><h3>bounties</h3><table class="rtable">${D.bounties.map(b=>`<tr><td>${b.n}</td><td>+${b.b} ${BONE}</td></tr>`).join("")}</table></div>
+    <div class="dsec"><h3>bounties</h3><table class="rtable">${[...D.bounties].sort((a,b)=>a.b-b.b).map(b=>`<tr><td>${b.n}</td><td>+${b.b} ${BONE}</td></tr>`).join("")}</table></div>
     <div class="dsec"><h3>curses</h3><table class="rtable c">${D.curses.map(c=>`<tr><td>${c.n}</td><td>${c.d}</td></tr>`).join("")}</table></div>
     <div class="dsec"><h3>what you can bring</h3><p class="dim sm">your items and add-ons unlock as you level up. offerings are up to you.</p>
       <table class="rtable kt"><tr><td></td>${S.role==="survivor"?"<td>items</td>":""}<td>add-ons</td></tr>${TIERS.map((t,i)=>{const a=allowance({role:S.role,grade:i*4},i);return `<tr><td style="color:var(${t.c})">${t.n}</td>${a.items!=null?`<td>up to ${RARW[a.items]}</td>`:""}<td>${a.addons<0?"none":"up to "+RARW[a.addons]}</td></tr>`}).join("")}</table></div>
@@ -1234,13 +1295,21 @@ async function drawCard(r){
   return c;
 }
 let CARD_KEY=null,CARD_URL=null;
+var CARD_JOB=null;
+const cardKeyOf=r=>JSON.stringify([r.role,r.grade,r.pips,r.completedAt,r.stats,r.perks,S.profile]);
+function buildCard(r){const key=cardKeyOf(r);
+  if(key===CARD_KEY&&CARD_URL)return Promise.resolve(CARD_URL);
+  if(CARD_JOB&&CARD_JOB.key===key)return CARD_JOB.p;
+  const p=drawCard(r).then(c=>new Promise(res=>c.toBlob(b=>{if(!b)return res(null);if(CARD_URL)URL.revokeObjectURL(CARD_URL);CARD_URL=URL.createObjectURL(b);CARD_KEY=key;res(CARD_URL);},"image/png")));
+  CARD_JOB={key,p};p.finally(()=>{if(CARD_JOB&&CARD_JOB.key===key)CARD_JOB=null;});return p;}
 async function showCard(force){
-  const r=run();if(!r)return;const img=document.getElementById("cardimg");if(!img)return;
-  const key=JSON.stringify([r.role,r.grade,r.pips,r.completedAt,r.stats,r.perks,S.profile]);
-  if(!force&&key===CARD_KEY&&CARD_URL){img.src=CARD_URL;return;}
-  const c=await drawCard(r);
-  c.toBlob(b=>{if(!b)return;if(CARD_URL)URL.revokeObjectURL(CARD_URL);CARD_URL=URL.createObjectURL(b);CARD_KEY=key;const im=document.getElementById("cardimg");if(im)im.src=CARD_URL;},"image/png");
+  const r=run();if(!r||!document.getElementById("cardimg"))return;if(force)CARD_KEY=null;
+  const u=await buildCard(r);const img=document.getElementById("cardimg");if(u&&img)img.src=u;
 }
+/* quietly rebuild the card a few seconds after anything changes */
+var cardPreT=null;
+function precard(){if(IS_OVERLAY_PAGE)return;clearTimeout(cardPreT);cardPreT=setTimeout(()=>{const r=run();if(!r||document.hidden)return;
+  const go=()=>buildCard(r).catch(()=>{});window.requestIdleCallback?requestIdleCallback(go,{timeout:4000}):go();},2500);}
 async function saveCard(){const r=run(),c=await drawCard(r),dl=await getDL();if(!dl){c.toBlob(b=>{if(!localSave(b,`a-bone-to-pick-${r.role}.png`))toast("long-press or right-click the card to save it.");else toast("card saved.");},"image/png");return;}
   c.toBlob(async b=>{try{await dl.save({filename:`a-bone-to-pick-${r.role}.png`,data:b});toast("card saved.");}catch(e){if(e&&e.code!=="declined")toast("the card couldn't be saved. long-press or right-click it instead.");}},"image/png");}
 
@@ -1260,7 +1329,7 @@ function tabBodyHTML(r){
         const l1=cs?`most common curse: <b style="color:var(--red)">${esc(cs.k)}</b>, ${cs.v} time${cs.v>1?"s":""}.`:"";
         const l2=bd?`most common bounty: <b style="color:var(--green)">${esc(bd.n)}</b>, ${tb.v} time${tb.v>1?"s":""}.`:"";
         return (l1||l2)?`<p class="sm dim" style="margin-top:14px;line-height:1.7">${[l1,l2].filter(Boolean).join("<br>")}</p>`:"";})()}`;
-  else if(ui.tab==="history"){const canUndo=r.snaps&&r.snaps.length;tabBody=r.log.length?`<div class="history"><table><thead><tr><th>game</th><th>result</th><th>grade after (pips)</th><th>bones</th><th>curse</th><th></th></tr></thead><tbody>${r.log.slice(0,80).map((l,i)=>`<tr><td class="n">${l.n!=null?l.n:r.stats.matches-i}</td><td class="res-${l.res}">${l.res==="none"?"no pip":l.res==="double"?"+2 pips":l.res==="grade"?"graded up":"+1 pip"}</td><td>${gradeName(l.grade)}${l.up?" \u2191":""}${l.pips!=null&&l.grade<FINAL?`<span class="dim"> (${l.pips}/${pipsNeed(l.grade)})</span>`:""}</td><td>${l.bones?"+"+l.bones:"0"}</td><td>${l.curse?`got ${esc(l.curse)}`:(l.served?`served ${esc(l.served)}`:"")}</td><td>${i===0&&canUndo?`<button class="undo" data-action="undo">undo</button>`:""}</td></tr>`).join("")}</tbody></table></div>
+  else if(ui.tab==="history"){const canUndo=r.snaps&&r.snaps.length;tabBody=r.log.length?`<div class="history"><table><thead><tr><th>game</th><th>result</th><th>grade after (pips)</th><th>bones</th><th>curse</th><th></th></tr></thead><tbody>${r.log.slice(0,80).map((l,i)=>`<tr><td class="n">${l.n!=null?l.n:r.stats.matches-i}</td><td class="res-${l.res}">${l.res==="none"?"no pip":l.res==="double"?"+2 pips":l.res==="grade"?"graded up":"+1 pip"}</td><td>${gradeName(l.grade)}${l.up?" \u2191":""}${l.pips!=null&&l.grade<FINAL?`<span class="dim"> (${l.pips}/${pipsNeed(l.grade)})</span>`:""}</td><td>${l.bones?(l.bones>0?"+":"\u2212")+Math.abs(l.bones):"0"}</td><td>${l.curse?`got ${esc(l.curse)}`:(l.served?`served ${esc(l.served)}`:"")}</td><td>${i===0&&canUndo?`<button class="undo" data-action="undo">undo</button>`:""}</td></tr>`).join("")}</tbody></table></div>
     <p class="dim sm" style="margin-top:10px">made a mistake? undo steps back one game at a time, up to the last ${Math.min(15,(r.snaps||[]).length)||15} games. for anything older, correct your grade or bones in settings.</p>`:`<p class="dim">your matches will show up here once you log them.</p>`;}
   else tabBody=`<div class="cardwrap"><img id="cardimg" class="cardprev" alt="your share card"><div class="stack" style="gap:12px">
       <p class="dim">${r.completedAt?"your climb is complete. save your card and share it.":"this is your card so far. finish at iridescent i for the full brag."}</p>
@@ -1298,7 +1367,7 @@ function render(){
           <li><span class="ic w">${iconImg([S.role+"-rule-loadout","rule-loadout"])}</span><div><b>the entity picks your loadout</b><span>four random perks from your roster, and a new ${S.role} every match. your perks reset at each rank progress.</span></div></li>
           <li><span class="ic y">${iconImg([S.role+"-rule-bounties","rule-bounties"])}</span><div><b>hit bounties, earn bones</b><span>each match draws two bounties. pull them off to earn bones.</span></div></li>
           <li><span class="ic o">${iconImg([S.role+"-rule-bones","rule-bones"])}</span><div><b>spend bones to pick your rules</b><span>reroll perks, choose your own, or buy your way out of a curse.</span></div></li>
-          <li><span class="ic r">${iconImg([S.role+"-rule-curse","rule-curse"])}</span><div><b>no pip means a curse</b><span>your next match comes with a silly rule you have to follow.</span></div></li>
+          <li><span class="ic r">${iconImg([S.role+"-rule-curse","rule-curse"])}</span><div><b>no pip means a curse</b><span>you lose a bone, and your next match comes with a silly rule you have to follow.</span></div></li>
         </ul></div>
       <div class="setup">
         <div><h3>set up your challenge</h3><p class="sm" style="margin-top:6px;opacity:.85">start wherever you are this month.</p></div>
@@ -1331,7 +1400,7 @@ function render(){
     if(blank) return `<div class="perk"><div class="dia"><span class="q">?</span></div><div class="name none">empty</div></div>`;
     if((ui.rolling&&ui.slotSpin==null)||ui.slotSpin===i) return `<div class="perk spin"><div class="dia"></div><div class="name"></div></div>`;
     const p=r.perks[i], landed=ui.landed||ui.landedSlot===i;
-    const canPass=r.pool==="all"&&!ui.pick&&!r.scrambled&&!r.inMatch;
+    const canPass=r.pool==="all"&&!ui.pick&&!r.scrambled&&!ui.charRoll&&!ui.rolling;
     const isLocked=r.lockedPerk===p;
     return `<div class="perk filled ${ui.pick?"pick":""} ${landed?"landed":""} ${r.scrambled&&!isLocked?"doomed":""} ${isLocked?"locked":""}">${canPass?`<button class="passx" data-action="passperk" data-i="${i}" aria-label="i don't have ${esc(p)}" title="don't have it? pass"></button>`:""}<button class="dia ${IMG_CACHE[p]?"has-img":""}" data-action="slot" data-i="${i}" ${ui.pick?"":"tabindex=-1"} aria-label="${esc(p)}">${imgTag(p)}</button><div class="name">${esc(p)}</div>${isLocked?`<span class="locktag">locked</span>`:""}</div>`;
   }).join("");
@@ -1346,12 +1415,12 @@ function render(){
   else {const keep=tier<4?`you keep these perks until you reach ${TIERS[tier+1].n}, unless you change them in the bone shop.`:"you keep these perks for the rest of the climb, unless you change them in the bone shop.";
     lfoot=`<span class="dim sm">${keep} your ${r.role} is rolled fresh every match. roster: ${POOLS[r.pool==="all"?"all":"base"]}.</span>`;}
   const al=allowance(r), base=allowance(r,tier);
-  const kbox=(label,idx,boosted)=>`<div class="kitbox ${boosted?"boost":""}"><span class="k">${label}${boosted?" (smuggled)":""}</span><div class="ladder">${[0,1,2,3].map(i=>`<i class="${i<=idx?"on":""}" style="--rc:${RAR[i].c}"></i>`).join("")}</div>
+  const kbox=(label,idx,boosted,max)=>`<div class="kitbox ${boosted?"boost":""}"><span class="k">${label}${boosted?" (smuggled)":""}</span><div class="ladder">${Array.from({length:max+1},(_,i)=>i).map(i=>`<i class="${i<=idx?"on":""}" style="--rc:${RAR[i].c}"></i>`).join("")}</div>
     <div class="now">${idx<0?`<span class="dim">none yet</span>`:`<span class="rdot" style="--rc:${RAR[idx].c}"></span>up to ${RARW[idx]}`}</div></div>`;
   let nextU="";
   if(tier<4){const na=allowance(r,tier+1);const bits=[];if(al.items!=null&&na.items>base.items)bits.push(`${RARW[na.items]} items`);if(na.addons>base.addons)bits.push(`${RARW[na.addons]} add-ons`);
     if(bits.length) nextU=`<div class="kitnext">reach <b>${TIERS[tier+1].n}</b> to unlock ${bits.join(" and ")}.</div>`;}
-  const kit=`<div class="kit" style="--k:${al.items!=null?2:1}">${al.items!=null?kbox("items",al.items,r.contraband&&al.items>base.items):""}${kbox("add-ons",al.addons,r.contraband&&al.addons>base.addons)}${nextU}</div>`;
+  const kit=`<div class="kit" style="--k:${al.items!=null?2:1}">${al.items!=null?kbox("items",al.items,r.contraband&&al.items>base.items,RMAX.items):""}${kbox("add-ons",al.addons,r.contraband&&al.addons>base.addons,RMAX.addons)}${nextU}</div>`;
   const loadout=`<div class="panel ${r.needsRoll?"hot":""}"><div class="phead phead-stack"><h2>loadout</h2>${r.pool==="all"?`<p class="dim sm">don't have a ${r.role} or perk? simply click the \u00d7 and reroll.</p>`:""}</div><div class="loadout">${who}${perkCells}</div>${kit}<div class="lfoot">${lfoot}</div></div>`;
 
   const stepN=r.needsRoll?0:r.inMatch?2:1;
@@ -1372,11 +1441,11 @@ function render(){
     match=`<div class="panel hot"><div class="phead"><h2>the match</h2>${stepper}</div>${curse}
       <p style="margin-bottom:6px">you're playing <b>${esc(r.char.toLowerCase())}</b>.</p>
       ${r.doubleNext?`<p class="ddtag">double down: bounties pay double this match</p>`:""}
-      <p class="dim sm" style="margin-bottom:12px">go play. when you're back, tick the bounties you pulled off.</p>
+      <p class="dim sm" style="margin-bottom:12px">go play. when you're back, select the bounties you pulled off.</p>
       <ul class="bounties">${r.bounties.map(id=>{const b=DATA[r.role].bounties.find(x=>x.id===id);return `<li><label><input type="checkbox" name="bounty" value="${b.id}"><span class="top"><span class="hint"><span class="h-off">select to earn</span><span class="h-on">earned</span></span><span class="worth">+${b.b*(r.doubleNext?2:1)} ${BONE}</span></span><span class="bn">${esc(b.n)}</span></label></li>`}).join("")}</ul>
       <h3 style="margin-bottom:10px">how did it go?</h3>
       <div class="results">
-        <button class="btn r" data-action="log" data-res="none">no pip<small>safety pip, get cursed</small></button>
+        <button class="btn r" data-action="log" data-res="none">no pip<small>lose a bone, get cursed</small></button>
         <button class="btn g" data-action="log" data-res="pip">+1 pip<small>${pipPreview(r,1)}</small></button>
         <button class="btn gold" data-action="log" data-res="double">+2 pips<small>${pipPreview(r,2)}</small></button>
       </div></div>`;
@@ -1437,10 +1506,22 @@ function openOverlay(){ovCreds();pushOverlay(true);
 }
 const QS=new URLSearchParams(location.search);
 if(QS.has("overlay")){if(QS.get("show")){const on=QS.get("show").split(",");OVF.forEach(f=>ovOpt.show[f[0]]=on.includes(f[0]));}if(QS.get("role"))S.role=QS.get("role")==="killer"?"killer":"survivor";document.body.classList.add("overlay-only");const o=document.createElement("div");o.className="ovroot";o.style.padding="12px";document.body.appendChild(o);const code=(QS.get("code")||"").toLowerCase();
-  if(code&&RELAY_URL){let last=null;
-    const pull=()=>fetch(`${RELAY_URL}/state?code=${encodeURIComponent(code)}`,{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{
-      const d=j&&j.data&&j.data[S.role];last=d?{...d,role:S.role,stats:{matches:d.matches||0}}:null;o.innerHTML=overlayHTML(last,ovOpt);}).catch(()=>{});
-    o.innerHTML=overlayHTML(null,ovOpt);pull();setInterval(pull,4000);}
+  if(code&&RELAY_URL){
+    // adaptive checking: every 4s right after a change, easing to 10s then 20s while nothing happens.
+    // if the relay can't be reached (or the daily limit is hit), keep showing the last known state.
+    let lastUpdated=null,quietSince=Date.now(),timer=null,shown=false;
+    const nextDelay=ok=>{if(!ok)return 30000;const q=Date.now()-quietSince;return q<60000?4000:q<180000?10000:20000;};
+    const schedule=ms=>{clearTimeout(timer);if(!document.hidden)timer=setTimeout(pull,ms);};
+    const pull=()=>fetch(`${RELAY_URL}/state?code=${encodeURIComponent(code)}`,{cache:"no-store"}).then(res=>{
+        if(res.status===404){if(!shown){o.innerHTML=overlayHTML(null,ovOpt);}return true;}
+        if(!res.ok)return false;
+        return res.json().then(j=>{
+          if(j.updated!==lastUpdated){lastUpdated=j.updated;quietSince=Date.now();
+            const d=j.data&&j.data[S.role];o.innerHTML=overlayHTML(d?{...d,role:S.role,stats:{matches:d.matches||0}}:null,ovOpt);shown=true;}
+          return true;});
+      }).catch(()=>false).then(ok=>schedule(nextDelay(ok)));
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden){quietSince=Date.now();schedule(0);}else clearTimeout(timer);});
+    o.innerHTML=overlayHTML(null,ovOpt);pull();}
   else{const tick=()=>{o.innerHTML=overlayHTML(run(),ovOpt);};tick();setInterval(()=>{const f=load();if(f)S=f;tick();},2000);}}
 
 /* ---------- role switch motion ---------- */
@@ -1506,7 +1587,11 @@ rollover(); save(); render(); pushOverlay(true);
     setTimeout(()=>{tb.classList.remove("filled");setTimeout(()=>{busy=false;},1000);},250+900+2000);
   },{threshold:.9});io.observe(tb);})();
 (function warm(){const r=run();if(r){prefetch(r.perks,r.char,r.nextChar);pickUpcoming(r);save();}
+  // once the page has settled, load the rest of the run's art in the background
+  const later=()=>setTimeout(warmPools,1200);document.readyState==="complete"?later():addEventListener("load",later,{once:true});
 })();
+/* keeps every image on the visitor's device after the first view, so return visits load instantly */
+if("serviceWorker" in navigator&&location.protocol==="https:"){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 </script>
 </body>
 </html>
