@@ -78,7 +78,9 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:16p
 @keyframes pop{0%{transform:scale(1.15)}100%{transform:scale(1)}}
 .perk.doomed{opacity:.45}
 .perk.doomed .dia::before{border-style:dashed;border-color:var(--red)}
-#abandon{text-align:center}
+#abandon{text-align:center;padding-bottom:16px}
+#abandon .btn{white-space:nowrap}
+@media (max-width:400px){#abandon .btn{font-size:16px;padding-left:10px;padding-right:10px}}
 
 /* buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;background:var(--ink);color:var(--bg);border:2px solid var(--ink);border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:19px;line-height:1}
@@ -487,6 +489,23 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 .passx::before,.passx::after{content:"";position:absolute;top:50%;left:50%;width:12px;height:2.5px;border-radius:2px;background:#F6F8EB;transform:translate(-50%,-50%) rotate(45deg)}
 .passx::after{transform:translate(-50%,-50%) rotate(-45deg)}
 .passlist{display:flex;flex-wrap:wrap;gap:8px}
+.passx.stand{background:var(--orange);color:#F6F8EB;font:700 17px/26px system-ui,sans-serif;text-align:center}
+.passx.stand::before,.passx.stand::after{display:none}
+.perk .passx.stand{left:auto;right:calc(50% - 56px)}
+@media (max-width:620px){.perk .passx.stand{right:calc(50% - 40px);font-size:15px;line-height:22px}}
+.standtag{background:var(--orange)!important}
+.rtabs{display:flex;gap:8px;margin:12px 0 10px}
+.rtabs button{flex:1;border:2px solid #212121;background:transparent;color:#212121;border-radius:var(--rs);padding:8px 10px;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.rtabs button.on{background:#212121;color:#F6F8EB}
+.rtabs button span{font-weight:600;opacity:.7;margin-left:4px}
+.ownlist{display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;max-height:300px;overflow:auto;padding:12px;background:#fff;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);border-radius:var(--rs)}
+.own{text-transform:lowercase;border:2px solid #D24026;background:#D24026;color:#F6F8EB;border-radius:var(--rs);padding:5px 10px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;text-align:left}
+.own.off{background:transparent;color:#212121;opacity:.5;text-decoration:line-through}
+.own.hide{display:none}
+.rnote{margin-top:10px}
+.btn.rosterlink{margin-top:12px;width:100%;background:#F6F8EB;border-color:#F6F8EB;color:#D24026}
+.btn.rosterlink:hover{background:#fff;border-color:#fff}
+.btn.rosterlink[hidden]{display:none}
 .passchip{border:2px solid #212121;background:transparent;color:#212121;border-radius:var(--rs);padding:6px 12px;font:inherit;font-weight:700;font-size:15px;cursor:pointer}
 .passchip:hover:not(:disabled){background:#212121;color:#F6F8EB}
 .passchip:disabled{opacity:.45;cursor:not-allowed}
@@ -840,15 +859,15 @@ const DATA={
    {id:"save",n:"flashlight save",b:2,need:1},
    {id:"hatch",n:"escape through the hatch",b:2},
    {id:"nohook",n:"escape without being hooked",b:2},
-   {id:"trade",n:"take a hit or hook for someone in end game",b:3},
+   {id:"trade",n:"take a hit or hook for someone in the end game",b:3},
    {id:"key",n:"open the hatch with a key",b:3,need:2},
    {id:"sabotage",n:"sabotage a hook",b:2},
-   {id:"chests",n:"search three chests",b:1},
+   {id:"chests",n:"open three chests",b:1},
    {id:"twice",n:"escape after being hooked twice",b:3},
    {id:"gate",n:"open the exit gate",b:1},
    {id:"grasp",n:"help a survivor escape the killer's grasp",b:3},
    {id:"lose",n:"escape a chase",b:1},
-   {id:"genpop",n:"one gen pop during your chase",b:2},
+   {id:"genpop",n:"have a gen pop during your chase",b:2},
    {id:"totem",n:"cleanse one totem",b:1},
    {id:"twogens",n:"pop two gens",b:2},
    {id:"slap",n:"slap the killer's butt without being hit",b:2},
@@ -857,21 +876,21 @@ const DATA={
    {id:"gift",n:"give another survivor your unused item",b:2,need:0},
    {id:"miss",n:"make the killer swing and miss",b:1},
    {id:"prot",n:"take a protection hit for a survivor",b:1},
-   {id:"egunhook",n:"unhook a survivor during end game",b:2},
+   {id:"egunhook",n:"unhook a survivor during the end game",b:2},
    {id:"getslap",n:"get a survivor to slap your butt",b:1},
    {id:"swap",n:"trade items with a survivor",b:2,need:0},
    {id:"nohit",n:"escape without getting hit",b:3}],
   curses:[
    {n:"noodle legs",d:"you can't vault windows"},
    {n:"stage fright",d:"hide in a locker the first time you hear the terror radius"},
-   {n:"tour guide",d:"point at every generator you pass"},
+   {n:"tour guide",d:"point at every gen you pass"},
    {n:"empty pockets",d:"bring no items"},
-   {n:"procrastinator",d:"you can't start a generator until another gen is completed"},
+   {n:"procrastinator",d:"you can't start a gen until another gen is completed"},
    {n:"pallet shy",d:"you can't drop a pallet during your first chase"},
-   {n:"clingy",d:"you can't work on a generator alone"},
+   {n:"clingy",d:"you can't work on a gen alone"},
    {n:"hide and seek",d:"spend your first 60 seconds in a locker"},
    {n:"dizzy",d:"spin in a full circle before every vault"},
-   {n:"bad locksmith",d:"you can't unlock any chests"},
+   {n:"bad locksmith",d:"you can't open any chests"},
    {n:"wasteful",d:"you can't use any items"},
    {n:"stroller",d:"walk the first 60 seconds of the match"},
    {n:"keep calm",d:"you can only walk during the end game collapse"},
@@ -889,22 +908,22 @@ const DATA={
    "Unnerving Presence","Brutal Strength","Agitation","Predator","Bloodhound","Shadowborn","Enduring","Lightborn","Tinkerer","Stridor","Thanatophobia","A Nurse's Calling","Beast of Prey","Hex: Huntress Lullaby","Territorial Imperative"],
   bounties:[
    {id:"basement",n:"hook a survivor in the basement",b:1},
-   {id:"shack",n:"shack or god pallet thrown before two gens pop",b:1},
-   {id:"grab",n:"grab a survivor from a window or generator",b:2},
+   {id:"shack",n:"get the shack or god pallet thrown before two gens pop",b:1},
+   {id:"grab",n:"grab a survivor from a window or gen",b:2},
    {id:"close",n:"close the hatch",b:2},
-   {id:"mercy",n:"let the last survivor escape through hatch",b:2},
+   {id:"mercy",n:"let the last survivor escape through the hatch",b:2},
    {id:"4k",n:"get four kills",b:3},
    {id:"unhookhit",n:"hit a survivor whilst they're unhooking someone",b:1},
-   {id:"nogens",n:"end the match with no generators completed",b:3},
-   {id:"kicks",n:"kick five generators",b:1},
+   {id:"nogens",n:"end the match with no gens completed",b:3},
+   {id:"kicks",n:"kick five gens",b:1},
    {id:"mori",n:"mori a survivor",b:2},
    {id:"egchook",n:"hook a survivor during the end game collapse",b:2},
    {id:"earlyhook",n:"hook a survivor before a gen pops",b:2},
    {id:"locker",n:"find a survivor in a locker",b:2},
-   {id:"base2",n:"hook two survivors in basement",b:2},
-   {id:"base2same",n:"hook two survivors in basement at the same time",b:2},
+   {id:"base2",n:"hook two survivors in the basement",b:2},
+   {id:"base2same",n:"hook two survivors in the basement at the same time",b:2},
    {id:"three",n:"hook three survivors at the same time",b:3},
-   {id:"4klast",n:"get a 4k when there is one gen left",b:4},
+   {id:"4klast",n:"get four kills with one gen left",b:4},
    {id:"twelve",n:"get twelve hooks",b:4},
    {id:"shackmori",n:"mori a survivor in the shack",b:3},
    {id:"pallets5",n:"break five pallets",b:1},
@@ -914,7 +933,7 @@ const DATA={
    {id:"nostun",n:"avoid getting pallet stunned",b:2},
    {id:"threegen",n:"force a three gen",b:3}],
   curses:[
-   {n:"picky eater",d:"you can't kick any generators"},
+   {n:"picky eater",d:"you can't kick any gens"},
    {n:"short memory",d:"you can't hook the same survivor twice in a row"},
    {n:"polite",d:"nod at every survivor you down before picking them up"},
    {n:"bare hands",d:"bring no add-ons"},
@@ -924,15 +943,15 @@ const DATA={
    {n:"hands off",d:"you can't kick breakable walls"},
    {n:"chivalry",d:"let the first survivor you find go free"},
    {n:"ballerina",d:"one full spin after you hook a survivor"},
-   {n:"love taps",d:"hit every survivor on hook one time"},
+   {n:"love taps",d:"hit every survivor once while they're on the hook"},
    {n:"no peeping",d:"open a locker after you kick a gen"},
    {n:"merciful",d:"you can't hook the first survivor you down"},
    {n:"warm up",d:"complete one lap of the map before your first chase"},
    {n:"knock knock",d:"headbutt breakable walls before breaking them"},
-   {n:"m1'er",d:"don't use your power or m2 ability"},
+   {n:"m1'er",d:"you can't use your power or m2 ability"},
    {n:"showtime",d:"one full spin before you pick up a survivor"},
-   {n:"deep thinker",d:"after you hook a survivor stare at a wall for 5 seconds"},
-   {n:"moonwalker",d:"only walk backwards whilst carrying a survivor to hook"},
+   {n:"deep thinker",d:"after you hook a survivor, stare at a wall for 5 seconds"},
+   {n:"moonwalker",d:"only walk backwards whilst carrying a survivor to the hook"},
    {n:"scrambled",d:"the entity rerolls your whole loadout. lift the curse to keep your build",instant:true}]
  }
 };
@@ -963,7 +982,7 @@ const SHOP=[
  {id:"lock",cost:3,what:"lock a perk",how:"keep one perk through your next rank reroll. safe from scrambled too."},
  {id:"choosesurv",cost:1,what:"choose your survivor",how:"pick your next survivor.",role:"survivor"},
  {id:"killer",cost:4,what:"choose your killer",how:"skip the roll and pick your next killer.",role:"killer"},
- {id:"rekill",cost:1,what:"reroll your killer",how:"don't fancy this killer? reroll them at random. during a match.",role:"killer",inMatch:true},
+ {id:"rekill",cost:1,what:"reroll your killer",how:"don't fancy this killer? reroll them at random, mid-match.",role:"killer",inMatch:true},
  {id:"ban",cost:3,what:"ban a killer",how:"remove one killer from your rolls for the rest of the run.",role:"killer"}
 ];
 const BONE='<img class="bone-i" src="img/icons/bone.webp" alt="" onerror="this.style.visibility=\'hidden\'">';
@@ -1056,7 +1075,7 @@ function enterFog(){const r=run(),a=allowance(r);
     else{els.forEach(e=>{e.textContent=fc.toLowerCase();e.classList.add("landed");});setTimeout(go,2600);}
   };tick();}
 function logMatch(res){
-  const r=run(); pushSnap(r);
+  const r=run(); pushSnap(r); restoreStandins(r);
   const hit=[...document.querySelectorAll('input[name="bounty"]:checked')].map(i=>i.value);
   const mult=r.doubleNext?2:1; let gained=0; hit.forEach(id=>{const b=DATA[r.role].bounties.find(x=>x.id===id);gained+=b.b*mult;r.stats.bounty[id]=(r.stats.bounty[id]||0)+1;});r.doubleNext=false;
   r.bones+=gained; r.stats.earned+=gained; r.stats.matches++;
@@ -1129,6 +1148,22 @@ function passPerk(i){
   x.push(p);const np=rnd(poolPerks(r).filter(q=>!r.perks.includes(q)));
   spinSlot(i,np,()=>{r.perks[i]=np;save();toast(`passed on ${p.toLowerCase()}. it won't be rolled again.`);});
 }
+/* a perk you haven't unlocked on this character sits out for one match: a random stand-in takes its slot,
+   and the original comes back when the match is logged. if you don't have the stand-in either, tap again:
+   up to STAND_TRIES rolls per slot per match, never repeating a perk you've already been offered. */
+const STAND_TRIES=3;
+function standIn(i){
+  const r=run();if(!r||!r.inMatch)return;r.stand=r.stand||{};r.standTries=r.standTries||{};r.standSeen=r.standSeen||{};
+  if((r.standTries[i]||0)>=STAND_TRIES)return;
+  const first=r.stand[i]==null, orig=first?r.perks[i]:r.stand[i], seen=r.standSeen[i]||[];
+  const taken=[...r.perks,...Object.values(r.stand),...seen];
+  const opts=poolPerks(r).filter(q=>!taken.includes(q));if(!opts.length){toast("no other perks left to stand in.");return;}
+  const np=rnd(opts);prefetch(np);
+  spinSlot(i,np,()=>{if(!first)seen.push(r.perks[i]);r.standSeen[i]=seen;r.stand[i]=orig;r.perks[i]=np;r.standTries[i]=(r.standTries[i]||0)+1;
+    r.stats.standins=(r.stats.standins||0)+1;save();
+    const left=STAND_TRIES-r.standTries[i];toast(`${np.toLowerCase()} stands in for ${orig.toLowerCase()} this match.${left?"":" that was your last try for this slot."}`);});
+}
+function restoreStandins(r){if(r&&r.stand){Object.entries(r.stand).forEach(([i,p])=>{r.perks[+i]=p;});}if(r){r.stand=null;r.standTries=null;r.standSeen=null;}}
 function passChar(){
   const r=run(),c=r.char,x=passed(r.role).chars;
   if(poolChars(r).length-1<MIN_CHARS){toast(`you need at least ${MIN_CHARS} ${r.role}s in your roster.`);return;}
@@ -1184,17 +1219,43 @@ function openRules(){
       <table class="rtable kt"><tr><td></td>${S.role==="survivor"?"<td>items</td>":""}<td>add-ons</td></tr>${TIERS.map((t,i)=>{const a=allowance({role:S.role,grade:i*4},i);return `<tr><td style="color:var(${t.c})">${t.n}</td>${a.items!=null?`<td>up to ${RARW[a.items]}</td>`:""}<td>${a.addons<0?"none":"up to "+RARW[a.addons]}</td></tr>`}).join("")}</table></div>
     <div class="dsec"><h3>the bone shop</h3><table class="rtable">${SHOP.filter(s=>!s.role||s.role===S.role).map(s=>`<tr><td>${s.what}</td><td>${s.cost} ${BONE}</td></tr>`).join("")}</table></div>`);
 }
-function openSettings(){
+/* ---------- roster (access all) ----------
+   untick anything you don't own and it's never rolled. removing works any time;
+   ticking something back on waits until there's no access all run in progress. */
+const rosterLocked=role=>{const r=S.runs[role];return !!(r&&r.pool==="all");};
+const ownedCount=(role,k)=>ALL[role][k].length-passed(role)[k].filter(n=>ALL[role][k].includes(n)).length;
+const rosterOK=role=>ownedCount(role,"perks")>=MIN_PERKS&&ownedCount(role,"chars")>=MIN_CHARS;
+function rosterChips(k){const role=S.role,x=passed(role)[k];
+  return [...ALL[role][k]].sort((a,b)=>a.localeCompare(b)).map(n=>`<button class="own ${x.includes(n)?"off":""}" data-a="own" data-k="${k}" data-n="${esc(n)}" aria-pressed="${!x.includes(n)}">${esc(n)}</button>`).join("");}
+function rosterHTML(){const role=S.role,k=ui.rtab||"chars",locked=rosterLocked(role);
+  return `<div class="dsec" id="rostersec"><h3>your roster (access all only)</h3>
+    <p class="dim sm">untick any ${role}s and perks you don't own and they'll never be rolled. if you own a perk but haven't unlocked it on the ${role} you're playing, use the \u21bb on that perk during the match instead.</p>
+    <div class="rtabs"><button data-a="rtab" data-k="chars" class="${k==="chars"?"on":""}">${role}s<span id="rc-chars">${ownedCount(role,"chars")}/${ALL[role].chars.length}</span></button><button data-a="rtab" data-k="perks" class="${k==="perks"?"on":""}">perks<span id="rc-perks">${ownedCount(role,"perks")}/${ALL[role].perks.length}</span></button></div>
+    <div class="field" style="margin-bottom:10px"><input id="rsearch" type="search" aria-label="search your roster" placeholder="search ${k==="chars"?role+"s":"perks"}" autocomplete="off" spellcheck="false"></div>
+    <div class="ownlist" id="ownlist">${rosterChips(k)}</div>
+    ${locked?"":`<div class="btnrow" style="margin-top:10px"><button class="btn ghost" data-a="rall">tick all</button><button class="btn ghost" data-a="rnone">untick all</button></div>`}
+    <p class="dim sm rnote">${locked?`you're mid-run, so you can untick things now and tick them back on once this run is finished or abandoned. changes apply from your next roll.`:`you need at least ${MIN_PERKS} perks and ${MIN_CHARS} ${role}s ticked to start an access all run.`}</p></div>`;}
+function rosterCounts(){["chars","perks"].forEach(k=>{const el=document.getElementById("rc-"+k);if(el)el.textContent=`${ownedCount(S.role,k)}/${ALL[S.role][k].length}`;});}
+function rosterFilter(){const q=(document.getElementById("rsearch")||{value:""}).value.trim().toLowerCase();
+  document.querySelectorAll("#ownlist .own").forEach(b=>b.classList.toggle("hide",!!q&&!b.dataset.n.toLowerCase().includes(q)));}
+function rosterClick(b){const a=b.dataset.a,role=S.role,locked=rosterLocked(role);
+  if(a==="rtab"){ui.rtab=b.dataset.k;const sec=document.getElementById("rostersec");sec.outerHTML=rosterHTML();bindRoster();return true;}
+  if(a==="own"){const k=b.dataset.k,n=b.dataset.n,x=passed(role)[k],i=x.indexOf(n);
+    if(i>-1){if(locked){toast("you can tick things back on once this run is finished or abandoned.");return true;}x.splice(i,1);}
+    else{const min=k==="perks"?MIN_PERKS:MIN_CHARS;if(ownedCount(role,k)-1<min&&S.runs[role]){toast(`you need at least ${min} ${k==="perks"?"perks":role+"s"} in your roster.`);return true;}x.push(n);}
+    b.classList.toggle("off",i<0);b.setAttribute("aria-pressed",String(i>-1));save();rosterCounts();return true;}
+  if(a==="rall"||a==="rnone"){if(locked)return true;const k=ui.rtab||"chars";passed(role)[k]=a==="rall"?[]:[...ALL[role][k]];save();
+    document.getElementById("ownlist").innerHTML=rosterChips(k);rosterFilter();rosterCounts();return true;}
+  return false;}
+function bindRoster(){const s=document.getElementById("rsearch");if(s)s.addEventListener("input",rosterFilter);}
+function openSettings(focus){
   const r=run();
   dialog("settings",`
     <div class="dsec"><h3>your card</h3>
       <div class="field"><label for="tag">gamertag</label><input id="tag" value="${esc(S.profile.tag)}" maxlength="40" placeholder="YourName"></div>
       <div class="field"><label for="soc">socials</label><input id="soc" value="${esc(S.profile.socials)}" maxlength="80" placeholder="twitch.tv/yourname"></div>
     </div>
-    ${(()=>{const x=passed(S.role),all=[...x.chars.map(n=>["chars",n]),...x.perks.map(n=>["perks",n])];
-      const locked=!!S.runs[S.role];
-      return `<div class="dsec"><h3>passed in access all</h3><p class="dim sm">${all.length?(locked?`the ${S.role}s and perks you've passed on. you can put them back between runs, once this run is finished or abandoned.`:`the ${S.role}s and perks you've passed on. tap one to put it back in your roster.`):`nothing passed yet. in an access all run, use the \u00d7 on a perk or ${S.role} you don't have.`}</p>
-      ${all.length?`<div class="passlist">${all.map(([k,n])=>`<button class="passchip" data-a="unpass" data-k="${k}" data-n="${esc(n)}" ${locked?"disabled":""}>${esc(n)} ${locked?"":`<span aria-hidden="true">\u21ba</span>`}</button>`).join("")}</div>`:""}</div>`;})()}
+    ${rosterHTML()}
     <div class="dsec"><h3>backup</h3>
       <p class="dim sm">your progress lives in this browser. save a backup so you can restore it if you clear your cache or switch devices.</p>
       <div class="btnrow"><button class="btn" data-a="copy">copy backup code</button><button class="btn ghost" data-a="dl">download backup</button></div>
@@ -1208,14 +1269,15 @@ function openSettings(){
       ${r.grade<FINAL?`<div class="field"><label for="fixpips">correct your pips</label><select id="fixpips">${Array.from({length:pipsNeed(r.grade)},(_,i)=>`<option value="${i}" ${i===(r.pips||0)?"selected":""}>${i} of ${pipsNeed(r.grade)}</option>`).join("")}</select></div>`:""}
       <div class="field"><label>correct your bones</label><div class="bonesadj"><button class="btn ghost" data-a="b-">−</button><span class="v" id="badj">${r.bones}</span><button class="btn ghost" data-a="b+">+</button></div></div>
       <div id="abandon"><button class="btn r" data-a="reset">abandon this run</button></div></div>`:""}`,
-    (b)=>{const a=b.dataset.a;if(a==="copy")copyCode();if(a==="dl")downloadBackup();if(a==="import")importCode(document.getElementById("codebox").value);
-      if(a==="unpass"){if(S.runs[S.role]){toast("you can put these back between runs.");return;}const x=passed(S.role)[b.dataset.k];const i=x.indexOf(b.dataset.n);if(i>-1)x.splice(i,1);save();toast(`${b.dataset.n.toLowerCase()} is back in your roster.`);openSettings();}
+    (b)=>{if(rosterClick(b))return;const a=b.dataset.a;if(a==="copy")copyCode();if(a==="dl")downloadBackup();if(a==="import")importCode(document.getElementById("codebox").value);
       if(a==="b-"||a==="b+"){const r=run();r.bones=Math.max(0,r.bones+(a==="b+"?1:-1));save();document.getElementById("badj").textContent=r.bones;render();}
-      if(a==="reset"){document.getElementById("abandon").innerHTML=`<p class="sm" style="margin-bottom:10px">abandon your ${S.role} run? this can't be undone unless you've saved a backup.</p><div class="btnrow"><button class="btn r" data-a="reset-yes">yes, abandon it</button><button class="btn ghost" data-a="reset-no">keep my run</button></div>`;document.getElementById("abandon").scrollIntoView({behavior:reduced?"auto":"smooth",block:"end"});}
+      if(a==="reset"){document.getElementById("abandon").innerHTML=`<p class="sm" style="margin-bottom:10px">abandon your ${S.role} run? this can't be undone unless you've saved a backup.</p><div class="btnrow"><button class="btn r" data-a="reset-yes">yes, abandon it</button><button class="btn ghost" data-a="reset-no">keep my run</button></div>`;{const dl=document.getElementById("dlg"),bh=reduced?"auto":"smooth";[dl,dl.querySelector(".dbody")].forEach(el=>{if(el&&el.scrollHeight>el.clientHeight)el.scrollTo({top:el.scrollHeight,behavior:bh});});}}
       if(a==="reset-no"){document.getElementById("abandon").innerHTML=`<button class="btn r" data-a="reset">abandon this run</button>`;}
       if(a==="reset-yes"){S.runs[S.role]=null;ui.pick=null;save();closeDlg();render();toast(`${S.role} run abandoned.`);}});
 }
 
+const _openSettings=openSettings;
+openSettings=function(focus){_openSettings(focus);bindRoster();if(focus==="roster"){const el=document.getElementById("rostersec");if(el)el.scrollIntoView({block:"start"});}};
 /* ---------- backup ---------- */
 const exportCode=()=>"ABTP3:"+btoa(unescape(encodeURIComponent(JSON.stringify(S,(k,v)=>k==="snaps"?undefined:v))));
 function importCode(t){try{t=t.trim();const j=t.startsWith("{")?t:decodeURIComponent(escape(atob(t.replace(/^ABTP\d:/,""))));const o=JSON.parse(j);if(!o||!o.runs)throw 0;S=o;rollover();save();closeDlg();render();toast("progress restored.");}catch(e){toast("that code isn't a valid backup. copy the whole code and try again.");}}
@@ -1272,7 +1334,7 @@ async function drawCard(r){
   x.fillStyle=cr;x.font=D(96);x.fillText(`${r.role} run`,M,130);
   x.font=B(46);x.fillText(`${season(new Date(r.startedAt)).name} thirteenth reset`,M,196);
   x.fillStyle=tc[t];x.font=D(100);x.fillText(gradeName(r.grade),M,372);
-  x.fillStyle=r.completedAt?G:cr;x.font=B(46);x.fillText(r.completedAt?"challenge complete":(r.role==="killer"?"still hooking":"still loopin"),M,438);
+  x.fillStyle=r.completedAt?G:cr;x.font=B(46);x.fillText(r.completedAt?"challenge complete":(r.role==="killer"?"still hookin":"still loopin"),M,438);
   // grade bar, edge to edge
   {const gap=10,tgap=22,seg=((W-2*M)-15*gap-4*tgap)/20;let bx=M;
    for(let i=0;i<20;i++){const tt=Math.floor(i/4);x.fillStyle=i<=r.grade?tc[tt]:"#2f2f2c";x.fillRect(bx,478,seg,18);bx+=seg+(i%4===3?tgap:gap);}}
@@ -1334,7 +1396,6 @@ function tabBodyHTML(r){
   else tabBody=`<div class="cardwrap"><img id="cardimg" class="cardprev" alt="your share card"><div class="stack" style="gap:12px">
       <p class="dim">${r.completedAt?"your climb is complete. save your card and share it.":"this is your card so far. finish at iridescent i for the full brag."}</p>
       <p class="dim sm">add your gamertag and socials in settings and they'll appear on the card.</p>
-      <p class="dim sm">if your card isn't showing yet, give it a moment. it's loading your character image and putting your card together.</p>
       <div class="row" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn y" data-action="savecard">save card</button><button class="btn ghost" data-action="settings">edit details</button></div></div></div>`;
   return tabBody;
 }
@@ -1364,7 +1425,7 @@ function render(){
       <div class="start-info"><h2>the ${lc()} challenge</h2>
         <p class="dim" style="margin-top:8px">get from ash iv to iridescent i before grades reset on the 13th, using only what the entity gives you.</p>
         <ul class="rules-list">
-          <li><span class="ic w">${iconImg([S.role+"-rule-loadout","rule-loadout"])}</span><div><b>the entity picks your loadout</b><span>four random perks from your roster, and a new ${S.role} every match. your perks reset at each rank progress.</span></div></li>
+          <li><span class="ic w">${iconImg([S.role+"-rule-loadout","rule-loadout"])}</span><div><b>the entity picks your loadout</b><span>four random perks from your roster, and a new ${S.role} every match. your perks reset each time you rank up.</span></div></li>
           <li><span class="ic y">${iconImg([S.role+"-rule-bounties","rule-bounties"])}</span><div><b>hit bounties, earn bones</b><span>each match draws two bounties. pull them off to earn bones.</span></div></li>
           <li><span class="ic o">${iconImg([S.role+"-rule-bones","rule-bones"])}</span><div><b>spend bones to pick your rules</b><span>reroll perks, choose your own, or buy your way out of a curse.</span></div></li>
           <li><span class="ic r">${iconImg([S.role+"-rule-curse","rule-curse"])}</span><div><b>no pip means a curse</b><span>you lose a bone, and your next match comes with a silly rule you have to follow.</span></div></li>
@@ -1374,7 +1435,7 @@ function render(){
         <div class="field"><label>your roster</label><div class="choice">
           <label><input type="radio" name="pool" value="base" ${ui.setup.pool!=="all"?"checked":""}><div><b>base game</b><span>${DATA[S.role].chars.length} ${S.role}s and ${DATA[S.role].perks.length} perks.</span></div></label>
           <label><input type="radio" name="pool" value="all" ${ui.setup.pool==="all"?"checked":""}><div><b>access all</b><span>${ALL[S.role].chars.length} ${S.role}s and ${ALL[S.role].perks.length} perks.</span></div></label>
-        </div></div>
+        </div><button class="btn rosterlink" data-action="roster" ${ui.setup.pool==="all"?"":"hidden"}>set up your roster</button></div>
         <div class="field"><label for="sg">your grade</label><select id="sg">${Array.from({length:FINAL},(_,i)=>`<option value="${i}">${gradeName(i)}</option>`).join("")}</select></div>
         <div class="field"><label for="sp">your pips</label><select id="sp">${[0,1,2,3,4].slice(0,3).map(n=>`<option value="${n}">${n}</option>`).join("")}</select></div>
         <button class="btn light lg" data-action="start">begin your challenge</button>
@@ -1400,14 +1461,14 @@ function render(){
     if(blank) return `<div class="perk"><div class="dia"><span class="q">?</span></div><div class="name none">empty</div></div>`;
     if((ui.rolling&&ui.slotSpin==null)||ui.slotSpin===i) return `<div class="perk spin"><div class="dia"></div><div class="name"></div></div>`;
     const p=r.perks[i], landed=ui.landed||ui.landedSlot===i;
-    const canPass=r.pool==="all"&&!ui.pick&&!r.scrambled&&!ui.charRoll&&!ui.rolling;
+    const stood=!!(r.stand&&r.stand[i]!=null), tries=(r.standTries&&r.standTries[i])||0, canStand=r.inMatch&&tries<STAND_TRIES&&!ui.pick&&!r.scrambled&&!ui.charRoll&&!ui.rolling;
     const isLocked=r.lockedPerk===p;
-    return `<div class="perk filled ${ui.pick?"pick":""} ${landed?"landed":""} ${r.scrambled&&!isLocked?"doomed":""} ${isLocked?"locked":""}">${canPass?`<button class="passx" data-action="passperk" data-i="${i}" aria-label="i don't have ${esc(p)}" title="don't have it? pass"></button>`:""}<button class="dia ${IMG_CACHE[p]?"has-img":""}" data-action="slot" data-i="${i}" ${ui.pick?"":"tabindex=-1"} aria-label="${esc(p)}">${imgTag(p)}</button><div class="name">${esc(p)}</div>${isLocked?`<span class="locktag">locked</span>`:""}</div>`;
+    return `<div class="perk filled ${ui.pick?"pick":""} ${landed?"landed":""} ${r.scrambled&&!isLocked?"doomed":""} ${isLocked?"locked":""}">${canStand?`<button class="passx stand" data-action="standin" data-i="${i}" aria-label="not on this ${r.role}? swap ${esc(p)} for a stand-in this match" title="${stood?`don't have this one either? try another (${STAND_TRIES-tries} left)`:`not on this ${r.role}? stand-in for this match`}">\u21bb</button>`:""}<button class="dia ${IMG_CACHE[p]?"has-img":""}" data-action="slot" data-i="${i}" ${ui.pick?"":"tabindex=-1"} aria-label="${esc(p)}">${imgTag(p)}</button><div class="name">${esc(p)}</div>${isLocked?`<span class="locktag">locked</span>`:stood?`<span class="locktag standtag" title="standing in for ${esc(r.stand[i])}">stand-in</span>`:""}</div>`;
   }).join("");
   const shown=r.inMatch?r.char:r.nextChar;
   const whoSub=r.inMatch?"this match":r.nextChar?"bought for next match":"rolled each match";
   const canPassChar=r.pool==="all"&&r.inMatch&&!ui.charRoll&&!!r.char;
-  const who=`<div class="who"><div class="portrait-wrap">${canPassChar?`<button class="passx" data-action="passchar" aria-label="i don't have ${esc(r.char)}" title="don't have them? pass"></button>`:""}<div class="portrait">${shown?esc(shown.replace(/^The /,"")[0].toLowerCase()):"?"}${shown&&!ui.charRoll?imgTag(shown):""}</div></div><div><div class="name ${shown||ui.charRoll?"":"none"}" ${ui.charRoll?"data-spin":""}>${shown?esc(shown):(r.role==="killer"?"your killer":"your survivor")}</div><div class="sm dim">${ui.charRoll?"choosing\u2026":whoSub}</div></div></div>`;
+  const who=`<div class="who"><div class="portrait-wrap">${canPassChar?`<button class="passx" data-action="passchar" aria-label="don't own ${esc(r.char)}? remove them from your roster" title="don't own them? remove from your roster"></button>`:""}<div class="portrait">${shown?esc(shown.replace(/^The /,"")[0].toLowerCase()):"?"}${shown&&!ui.charRoll?imgTag(shown):""}</div></div><div><div class="name ${shown||ui.charRoll?"":"none"}" ${ui.charRoll?"data-spin":""}>${shown?esc(shown):(r.role==="killer"?"your killer":"your survivor")}</div><div class="sm dim">${ui.charRoll?"choosing\u2026":whoSub}</div></div></div>`;
   let lfoot;
   if(r.needsRoll&&r.scrambled) lfoot=`<span style="color:var(--red);font-weight:700">scrambled. roll a new loadout, or spend ${LIFT} bones to lift the curse and keep this one.</span><button class="btn y lg" data-action="roll" ${ui.rolling?"disabled":""}>${ui.rolling?"rolling\u2026":"roll my new loadout"}</button>`;
   else if(r.needsRoll) lfoot=`${r.tierUp?`<span class="tierup">you reached ${TIERS[tier].n}. time for a fresh loadout.</span>`:`<span class="dim sm">let the entity decide what you take into the fog.</span>`}<button class="btn y lg" data-action="roll" ${ui.rolling?"disabled":""}>${ui.rolling?"rolling\u2026":"roll my loadout"}</button>`;
@@ -1421,7 +1482,7 @@ function render(){
   if(tier<4){const na=allowance(r,tier+1);const bits=[];if(al.items!=null&&na.items>base.items)bits.push(`${RARW[na.items]} items`);if(na.addons>base.addons)bits.push(`${RARW[na.addons]} add-ons`);
     if(bits.length) nextU=`<div class="kitnext">reach <b>${TIERS[tier+1].n}</b> to unlock ${bits.join(" and ")}.</div>`;}
   const kit=`<div class="kit" style="--k:${al.items!=null?2:1}">${al.items!=null?kbox("items",al.items,r.contraband&&al.items>base.items,RMAX.items):""}${kbox("add-ons",al.addons,r.contraband&&al.addons>base.addons,RMAX.addons)}${nextU}</div>`;
-  const loadout=`<div class="panel ${r.needsRoll?"hot":""}"><div class="phead phead-stack"><h2>loadout</h2>${r.pool==="all"?`<p class="dim sm">don't have a ${r.role} or perk? simply click the \u00d7 and reroll.</p>`:""}</div><div class="loadout">${who}${perkCells}</div>${kit}<div class="lfoot">${lfoot}</div></div>`;
+  const loadout=`<div class="panel ${r.needsRoll?"hot":""}"><div class="phead phead-stack"><h2>loadout</h2>${r.inMatch?`<p class="dim sm">perk not unlocked on this ${r.role}? tap \u21bb for a stand-in, this match only.${r.pool==="all"?` don't own this ${r.role} at all? tap the \u00d7.`:""}</p>`:r.pool==="all"?`<p class="dim sm">don't own something? untick it in <button class="link" data-action="roster">your roster</button>.</p>`:""}</div><div class="loadout">${who}${perkCells}</div>${kit}<div class="lfoot">${lfoot}</div></div>`;
 
   const stepN=r.needsRoll?0:r.inMatch?2:1;
   const stepper=`<div class="stepper">${["roll","fog","log"].map((l,i)=>`<span class="${i<stepN?"done":i===stepN?"now":""}">${i<stepN?"\u2713 ":""}${l}</span>`).join("")}</div>`;
@@ -1549,6 +1610,8 @@ document.addEventListener("click",e=>{
   if(a==="roleflip"){slideSwitch();S.role=S.role==="survivor"?"killer":"survivor";ui.pick=null;save();render();const el=document.getElementById("app");el.classList.remove("fade");void el.offsetWidth;el.classList.add("fade");}
   if(a==="role"){if(S.role===b.dataset.role)return;S.role=b.dataset.role;ui.pick=null;save();render();const el=document.getElementById("app");el.classList.remove("fade");void el.offsetWidth;el.classList.add("fade");}
   if(a==="start"){setTimeout(()=>goTo("top"),0);}
+  if(a==="start"){const pl=(document.querySelector('input[name="pool"]:checked')||{value:"base"}).value;
+    if(pl==="all"&&!rosterOK(S.role)){toast(`your roster needs at least ${MIN_PERKS} perks and ${MIN_CHARS} ${S.role}s.`);openSettings("roster");return;}}
   if(a==="start") startRun(S.role,+document.getElementById("sg").value,+(document.getElementById("sp")||{value:0}).value,(document.querySelector('input[name="pool"]:checked')||{value:"base"}).value);
   if(a==="roll") rollLoadout();
   if(a==="fog") enterFog();
@@ -1557,6 +1620,8 @@ document.addEventListener("click",e=>{
   if(a==="shop") shop(b.dataset.id);
   if(a==="slot") slotClick(+b.dataset.i);
   if(a==="passperk") passPerk(+b.dataset.i);
+  if(a==="standin") standIn(+b.dataset.i);
+  if(a==="roster"){openSettings("roster");return;}
   if(a==="passchar") passChar();
   if(a==="cancelpick"){ui.pick=null;render();}
   if(a==="tab"){if(ui.tab===b.dataset.tab)return;ui.tab=b.dataset.tab;const tabs=b.parentElement;tabs.dataset.active=ui.tab;tabs.querySelectorAll("button").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===ui.tab));
@@ -1567,7 +1632,7 @@ document.addEventListener("click",e=>{
   if(a==="settings") openSettings();
 });
 document.addEventListener("change",e=>{
-  if(e.target.name==="pool"){ui.setup.pool=e.target.value;return;}
+  if(e.target.name==="pool"){ui.setup.pool=e.target.value;const l=document.querySelector(".rosterlink");if(l)l.hidden=ui.setup.pool!=="all";return;}
   if(e.target.id==="fixpool"){const r=run();r.pool=e.target.value==="all"?"all":"base";save();render();toast(`roster set to ${POOLS[r.pool]}.`);}
   if(e.target.id==="sg"){const sp=document.getElementById("sp");if(sp){const n=pipsNeed(+e.target.value);sp.innerHTML=Array.from({length:n},(_,i)=>`<option value="${i}">${i}</option>`).join("");}}
   if(e.target.id==="tag"){S.profile.tag=e.target.value.trim();save();if(ui.tab==="card")showCard();}
